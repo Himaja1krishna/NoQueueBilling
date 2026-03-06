@@ -1,0 +1,321 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: NoQueueBilling API - Lambda + API Gateway
+Parameters:
+  MockDataBucket:
+    Type: String
+    Description: S3 bucket name for mock-store data and orders
+  PersonifyCampaignArn:
+    Type: String
+    Default: ''
+    Description: Amazon Personalize campaign ARN (optional)
+  FraudDetectorId:
+    Type: String
+    Default: ''
+    Description: Fraud Detector detector ID (optional)
+  KmsKeyId:
+    Type: String
+    Description: KMS key ID or ARN for signing receipts
+  RzpKeyId:
+    Type: String
+    Description: Razorpay key ID
+  RzpKeySecret:
+    Type: String
+    NoEcho: true
+    Description: Razorpay key secret
+  RzpWebhookSecret:
+    Type: String
+    NoEcho: true
+    Description: Razorpay webhook secret for payment/confirm
+Globals:
+  Function:
+    Runtime: nodejs18.x
+    Timeout: 30
+    CodeUri: functions/
+    MemorySize: 256
+Resources:
+  NoQueueApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: noqueue-api
+      StageName: prod
+      Cors:
+        AllowMethods: '''GET,POST,OPTIONS'''
+        AllowHeaders: '''Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Razorpay-Signature'''
+        AllowOrigin: '''*'''
+  GetProductFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: getProduct.handler
+      Events:
+        GetProduct:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: NoQueueApi
+            Path: /product/{barcode}
+            Method: get
+      Environment:
+        Variables:
+          MOCK_DATA_BUCKET:
+            Ref: MockDataBucket
+      Policies:
+      - S3ReadPolicy:
+          BucketName:
+            Ref: MockDataBucket
+      CodeUri: GetProductFunction
+    Metadata:
+      SamResourceId: GetProductFunction
+  GetOffersFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: getOffers.handler
+      Events:
+        GetOffers:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: NoQueueApi
+            Path: /store/{store_id}/offers
+            Method: get
+      Environment:
+        Variables:
+          MOCK_DATA_BUCKET:
+            Ref: MockDataBucket
+      Policies:
+      - S3ReadPolicy:
+          BucketName:
+            Ref: MockDataBucket
+      CodeUri: GetOffersFunction
+    Metadata:
+      SamResourceId: GetOffersFunction
+  GetRecommendationsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: getRecommendations.handler
+      Events:
+        GetRecommendations:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: NoQueueApi
+            Path: /recommendations/{user_id}
+            Method: get
+      Environment:
+        Variables:
+          MOCK_DATA_BUCKET:
+            Ref: MockDataBucket
+          PERSONALIZE_CAMPAIGN_ARN:
+            Ref: PersonifyCampaignArn
+      Policies:
+      - S3ReadPolicy:
+          BucketName:
+            Ref: MockDataBucket
+      - Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action: personalize-runtime:GetRecommendations
+          Resource: '*'
+      CodeUri: GetRecommendationsFunction
+    Metadata:
+      SamResourceId: GetRecommendationsFunction
+  GetOrdersFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: getOrders.handler
+      Events:
+        GetOrders:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: NoQueueApi
+            Path: /orders/{user_id}
+            Method: get
+      Environment:
+        Variables:
+          MOCK_DATA_BUCKET:
+            Ref: MockDataBucket
+      Policies:
+      - Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action:
+          - s3:GetObject
+          - s3:ListBucket
+          Resource:
+          - Fn::Sub: arn:aws:s3:::${MockDataBucket}
+          - Fn::Sub: arn:aws:s3:::${MockDataBucket}/*
+      CodeUri: GetOrdersFunction
+    Metadata:
+      SamResourceId: GetOrdersFunction
+  InitiatePaymentFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: initiatePayment.handler
+      Events:
+        InitiatePayment:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: NoQueueApi
+            Path: /payment/initiate
+            Method: post
+      Environment:
+        Variables:
+          RZP_KEY_ID:
+            Ref: RzpKeyId
+          RZP_KEY_SECRET:
+            Ref: RzpKeySecret
+      CodeUri: InitiatePaymentFunction
+    Metadata:
+      SamResourceId: InitiatePaymentFunction
+  ConfirmPaymentFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: confirmPayment.handler
+      Events:
+        ConfirmPayment:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: NoQueueApi
+            Path: /payment/confirm
+            Method: post
+      Environment:
+        Variables:
+          RZP_WEBHOOK_SECRET:
+            Ref: RzpWebhookSecret
+          RZP_KEY_ID:
+            Ref: RzpKeyId
+          RZP_KEY_SECRET:
+            Ref: RzpKeySecret
+          KMS_KEY_ID:
+            Ref: KmsKeyId
+          MOCK_DATA_BUCKET:
+            Ref: MockDataBucket
+      Policies:
+      - Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action: kms:Sign
+          Resource:
+            Fn::Sub: arn:aws:kms:${AWS::Region}:${AWS::AccountId}:key/*
+        - Effect: Allow
+          Action:
+          - s3:PutObject
+          Resource:
+            Fn::Sub: arn:aws:s3:::${MockDataBucket}/*
+      CodeUri: ConfirmPaymentFunction
+    Metadata:
+      SamResourceId: ConfirmPaymentFunction
+  VerifyReceiptFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: verifyReceipt.handler
+      Events:
+        VerifyReceipt:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: NoQueueApi
+            Path: /receipt/verify
+            Method: post
+      Environment:
+        Variables:
+          MOCK_DATA_BUCKET:
+            Ref: MockDataBucket
+          KMS_KEY_ID:
+            Ref: KmsKeyId
+      Policies:
+      - Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action: kms:Verify
+          Resource:
+            Fn::Sub: arn:aws:kms:${AWS::Region}:${AWS::AccountId}:key/*
+        - Effect: Allow
+          Action:
+          - s3:GetObject
+          - s3:PutObject
+          - s3:ListBucket
+          Resource:
+          - Fn::Sub: arn:aws:s3:::${MockDataBucket}
+          - Fn::Sub: arn:aws:s3:::${MockDataBucket}/*
+      CodeUri: VerifyReceiptFunction
+    Metadata:
+      SamResourceId: VerifyReceiptFunction
+  GetReceiptFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: getReceipt.handler
+      Events:
+        GetReceipt:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: NoQueueApi
+            Path: /receipt/{transaction_id}
+            Method: get
+      Environment:
+        Variables:
+          MOCK_DATA_BUCKET:
+            Ref: MockDataBucket
+      Policies:
+      - Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action:
+          - s3:GetObject
+          - s3:ListBucket
+          Resource:
+          - Fn::Sub: arn:aws:s3:::${MockDataBucket}
+          - Fn::Sub: arn:aws:s3:::${MockDataBucket}/*
+      CodeUri: GetReceiptFunction
+    Metadata:
+      SamResourceId: GetReceiptFunction
+  ChatbotFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: chatbot.handler
+      Events:
+        Chatbot:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: NoQueueApi
+            Path: /chatbot
+            Method: post
+      Environment:
+        Variables:
+          MOCK_DATA_BUCKET:
+            Ref: MockDataBucket
+      Policies:
+      - S3ReadPolicy:
+          BucketName:
+            Ref: MockDataBucket
+      - Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action: bedrock:InvokeModel
+          Resource: '*'
+      CodeUri: ChatbotFunction
+    Metadata:
+      SamResourceId: ChatbotFunction
+Outputs:
+  ApiUrl:
+    Description: API Gateway endpoint URL
+    Value:
+      Fn::Sub:
+      - https://${ApiId}.execute-api.${Region}.amazonaws.com/prod
+      - ApiId:
+          Ref: NoQueueApi
+        Region:
+          Ref: AWS::Region
+    Export:
+      Name: NoQueueApiUrl
+  NoQueueApiId:
+    Description: API Gateway REST API ID
+    Value:
+      Ref: NoQueueApi
+    Export:
+      Name: NoQueueApiId

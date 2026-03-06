@@ -1,1 +1,57 @@
-[]
+[
+  {
+    "offer_id": "OFFER-001",
+    "store_id": "STORE_001",
+    "title": "15% off Dairy",
+    "description": "Get 15% off on select Amul dairy products.",
+    "discount_pct": 15,
+    "discount_flat": null,
+    "product_ids": ["PROD-0001", "PROD-0011"],
+    "valid_until": "2026-12-31T23:59:00Z",
+    "code": "DAIRY15"
+  },
+  {
+    "offer_id": "OFFER-002",
+    "store_id": "STORE_001",
+    "title": "10% off Snacks",
+    "description": "10% off on biscuits, ketchup and cookies.",
+    "discount_pct": 10,
+    "discount_flat": null,
+    "product_ids": ["PROD-0004", "PROD-0006", "PROD-0008"],
+    "valid_until": "2026-12-31T23:59:00Z",
+    "code": null
+  },
+  {
+    "offer_id": "OFFER-003",
+    "store_id": "STORE_001",
+    "title": "Rs 50 off Beverages",
+    "description": "Flat Rs 50 off on tea and coffee.",
+    "discount_pct": 0,
+    "discount_flat": 50,
+    "product_ids": ["PROD-0003", "PROD-0018"],
+    "valid_until": "2026-12-31T23:59:00Z",
+    "code": "BEV50"
+  },
+  {
+    "offer_id": "OFFER-004",
+    "store_id": "STORE_001",
+    "title": "Rs 25 off Grocery",
+    "description": "Flat Rs 25 off on oil and besan.",
+    "discount_pct": 0,
+    "discount_flat": 25,
+    "product_ids": ["PROD-0002", "PROD-0012"],
+    "valid_until": "2026-12-31T23:59:00Z",
+    "code": "FLAT25"
+  },
+  {
+    "offer_id": "OFFER-005",
+    "store_id": "STORE_001",
+    "title": "Buy 2 Get 1 Free",
+    "description": "Buy 2 Maggi 12-pack, get 1 free.",
+    "discount_pct": 33,
+    "discount_flat": null,
+    "product_ids": ["PROD-0009"],
+    "valid_until": "2026-12-31T23:59:00Z",
+    "code": "MAGGI2G1"
+  }
+]
