@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@aws-amplify/auth": "^6.19.1",
+    "@expo/metro-runtime": "~5.0.5",
     "@react-navigation/bottom-tabs": "^7.15.2",
     "@react-navigation/native": "^7.1.31",
     "@react-navigation/native-stack": "^7.14.2",
