@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Image } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 import { useAppSelector, useAppDispatch } from "../store";
@@ -44,7 +44,15 @@ export default function RecommendationCard({ item, onPress }) {
             activeOpacity={0.95}
         >
             <View style={styles.imageWrap}>
-                <View style={styles.imagePlaceholder} />
+                {item.image_url ? (
+                    <Image
+                        source={{ uri: item.image_url }}
+                        style={styles.productImage}
+                        resizeMode="cover"
+                    />
+                ) : (
+                    <View style={styles.imagePlaceholder} />
+                )}
                 <View style={styles.vegBadge}>
                     <View style={styles.vegDot} />
                 </View>
@@ -120,6 +128,10 @@ const styles = StyleSheet.create({
         position: "relative",
         justifyContent: "center",
         alignItems: "center",
+    },
+    productImage: {
+        width: "100%",
+        height: "100%",
     },
     imagePlaceholder: {
         width: "100%",

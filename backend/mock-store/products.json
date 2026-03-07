@@ -13,6 +13,7 @@
     "aisle_number": 3,
     "section": "Dairy & Eggs",
     "shelf": "Top shelf",
+    "image_url": "https://picsum.photos/seed/amul-butter/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 14
   },
@@ -30,6 +31,7 @@
     "aisle_number": 4,
     "section": "Staples (Rice, Atta, Dal)",
     "shelf": "Top shelf",
+    "image_url": "https://picsum.photos/seed/fortune-oil/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 28
   },
@@ -47,6 +49,7 @@
     "aisle_number": 1,
     "section": "Beverages & Juices",
     "shelf": "Top shelf",
+    "image_url": "https://picsum.photos/seed/tata-tea-gold/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 22
   },
@@ -64,6 +67,7 @@
     "aisle_number": 2,
     "section": "Snacks & Biscuits",
     "shelf": "Middle shelf",
+    "image_url": "https://picsum.photos/seed/britannia-good-day/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 35
   },
@@ -81,6 +85,7 @@
     "aisle_number": 5,
     "section": "Personal Care",
     "shelf": "Top shelf",
+    "image_url": "https://picsum.photos/seed/dabur-chyawanprash/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 18
   },
@@ -98,6 +103,7 @@
     "aisle_number": 2,
     "section": "Snacks & Biscuits",
     "shelf": "Middle shelf",
+    "image_url": "https://picsum.photos/seed/parle-g-gold/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 42
   },
@@ -115,6 +121,7 @@
     "aisle_number": 4,
     "section": "Staples (Rice, Atta, Dal)",
     "shelf": "Middle shelf",
+    "image_url": "https://picsum.photos/seed/mtr-gulab-jamun/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 24
   },
@@ -132,6 +139,7 @@
     "aisle_number": 2,
     "section": "Snacks & Biscuits",
     "shelf": "Middle shelf",
+    "image_url": "https://picsum.photos/seed/kissan-ketchup/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 30
   },
@@ -149,6 +157,7 @@
     "aisle_number": 2,
     "section": "Snacks & Biscuits",
     "shelf": "Middle shelf",
+    "image_url": "https://picsum.photos/seed/nestle-maggi/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 50
   },
@@ -166,6 +175,7 @@
     "aisle_number": 2,
     "section": "Snacks & Biscuits",
     "shelf": "Middle shelf",
+    "image_url": "https://picsum.photos/seed/itc-dark-fantasy/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 26
   },
@@ -183,6 +193,7 @@
     "aisle_number": 3,
     "section": "Dairy & Eggs",
     "shelf": "Middle shelf",
+    "image_url": "https://picsum.photos/seed/amul-taaza-milk/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 40
   },
@@ -200,6 +211,7 @@
     "aisle_number": 4,
     "section": "Staples (Rice, Atta, Dal)",
     "shelf": "Middle shelf",
+    "image_url": "https://picsum.photos/seed/fortune-besan/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 33
   },
@@ -217,6 +229,7 @@
     "aisle_number": 4,
     "section": "Staples (Rice, Atta, Dal)",
     "shelf": "Bottom shelf",
+    "image_url": "https://picsum.photos/seed/britannia-milk-bread/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 20
   },
@@ -234,6 +247,7 @@
     "aisle_number": 5,
     "section": "Personal Care",
     "shelf": "Top shelf",
+    "image_url": "https://picsum.photos/seed/dabur-honey/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 15
   },
@@ -251,6 +265,7 @@
     "aisle_number": 2,
     "section": "Snacks & Biscuits",
     "shelf": "Bottom shelf",
+    "image_url": "https://picsum.photos/seed/parle-krackjack/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 48
   },
@@ -268,6 +283,7 @@
     "aisle_number": 4,
     "section": "Staples (Rice, Atta, Dal)",
     "shelf": "Middle shelf",
+    "image_url": "https://picsum.photos/seed/mtr-rava-idli/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 19
   },
@@ -285,6 +301,7 @@
     "aisle_number": 2,
     "section": "Snacks & Biscuits",
     "shelf": "Middle shelf",
+    "image_url": "https://picsum.photos/seed/kissan-mixed-fruit-jam/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 22
   },
@@ -302,6 +319,7 @@
     "aisle_number": 1,
     "section": "Beverages & Juices",
     "shelf": "Top shelf",
+    "image_url": "https://picsum.photos/seed/nescafe-classic/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 12
   },
@@ -319,6 +337,7 @@
     "aisle_number": 4,
     "section": "Staples (Rice, Atta, Dal)",
     "shelf": "Middle shelf",
+    "image_url": "https://picsum.photos/seed/tata-moong-dal/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 31
   },
@@ -336,6 +355,7 @@
     "aisle_number": 4,
     "section": "Staples (Rice, Atta, Dal)",
     "shelf": "Bottom shelf",
+    "image_url": "https://picsum.photos/seed/aashirvaad-atta/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 25
   },
@@ -353,6 +373,7 @@
     "aisle_number": 3,
     "section": "Dairy & Eggs",
     "shelf": "Middle shelf",
+    "image_url": "https://picsum.photos/seed/amul-cheese-slices/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 21
   },
@@ -370,6 +391,7 @@
     "aisle_number": 4,
     "section": "Staples (Rice, Atta, Dal)",
     "shelf": "Top shelf",
+    "image_url": "https://picsum.photos/seed/fortune-rice-bran-oil/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 19
   },
@@ -387,6 +409,7 @@
     "aisle_number": 1,
     "section": "Beverages & Juices",
     "shelf": "Top shelf",
+    "image_url": "https://picsum.photos/seed/tata-tea-agni/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 16
   },
@@ -404,6 +427,7 @@
     "aisle_number": 2,
     "section": "Snacks & Biscuits",
     "shelf": "Middle shelf",
+    "image_url": "https://picsum.photos/seed/britannia-nutrichoice/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 38
   },
@@ -421,6 +445,7 @@
     "aisle_number": 5,
     "section": "Personal Care",
     "shelf": "Middle shelf",
+    "image_url": "https://picsum.photos/seed/dabur-lal-dant/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 44
   },
@@ -438,6 +463,7 @@
     "aisle_number": 2,
     "section": "Snacks & Biscuits",
     "shelf": "Bottom shelf",
+    "image_url": "https://picsum.photos/seed/parle-monaco/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 29
   },
@@ -455,6 +481,7 @@
     "aisle_number": 4,
     "section": "Staples (Rice, Atta, Dal)",
     "shelf": "Middle shelf",
+    "image_url": "https://picsum.photos/seed/mtr-bisibele/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 17
   },
@@ -472,6 +499,7 @@
     "aisle_number": 2,
     "section": "Snacks & Biscuits",
     "shelf": "Middle shelf",
+    "image_url": "https://picsum.photos/seed/kissan-orange-marmalade/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 23
   },
@@ -489,6 +517,7 @@
     "aisle_number": 2,
     "section": "Snacks & Biscuits",
     "shelf": "Bottom shelf",
+    "image_url": "https://picsum.photos/seed/nestle-kitkat/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 55
   },
@@ -506,6 +535,7 @@
     "aisle_number": 2,
     "section": "Snacks & Biscuits",
     "shelf": "Bottom shelf",
+    "image_url": "https://picsum.photos/seed/itc-bingo-mad-angles/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 60
   },
@@ -523,6 +553,7 @@
     "aisle_number": 3,
     "section": "Dairy & Eggs",
     "shelf": "Middle shelf",
+    "image_url": "https://picsum.photos/seed/amul-paneer/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 27
   },
@@ -540,6 +571,7 @@
     "aisle_number": 4,
     "section": "Staples (Rice, Atta, Dal)",
     "shelf": "Middle shelf",
+    "image_url": "https://picsum.photos/seed/fortune-chakki-atta/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 34
   },
@@ -557,6 +589,7 @@
     "aisle_number": 4,
     "section": "Staples (Rice, Atta, Dal)",
     "shelf": "Bottom shelf",
+    "image_url": "https://picsum.photos/seed/tata-salt/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 50
   },
@@ -574,6 +607,7 @@
     "aisle_number": 2,
     "section": "Snacks & Biscuits",
     "shelf": "Bottom shelf",
+    "image_url": "https://picsum.photos/seed/britannia-bourbon/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 41
   },
@@ -591,6 +625,7 @@
     "aisle_number": 5,
     "section": "Personal Care",
     "shelf": "Middle shelf",
+    "image_url": "https://picsum.photos/seed/dabur-pudin-hara/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 18
   },
@@ -608,6 +643,7 @@
     "aisle_number": 2,
     "section": "Snacks & Biscuits",
     "shelf": "Middle shelf",
+    "image_url": "https://picsum.photos/seed/parle-hide-seek/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 32
   },
@@ -625,6 +661,7 @@
     "aisle_number": 4,
     "section": "Staples (Rice, Atta, Dal)",
     "shelf": "Middle shelf",
+    "image_url": "https://picsum.photos/seed/mtr-vangi-bath/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 14
   },
@@ -642,6 +679,7 @@
     "aisle_number": 2,
     "section": "Snacks & Biscuits",
     "shelf": "Top shelf",
+    "image_url": "https://picsum.photos/seed/kissan-peanut-butter/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 20
   },
@@ -659,6 +697,7 @@
     "aisle_number": 1,
     "section": "Beverages & Juices",
     "shelf": "Top shelf",
+    "image_url": "https://picsum.photos/seed/nestle-milo/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 15
   },
@@ -676,6 +715,7 @@
     "aisle_number": 2,
     "section": "Snacks & Biscuits",
     "shelf": "Middle shelf",
+    "image_url": "https://picsum.photos/seed/itc-yippee-noodles/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 36
   },
@@ -693,6 +733,7 @@
     "aisle_number": 3,
     "section": "Dairy & Eggs",
     "shelf": "Bottom shelf",
+    "image_url": "https://picsum.photos/seed/amul-dahi/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 45
   },
@@ -710,6 +751,7 @@
     "aisle_number": 4,
     "section": "Staples (Rice, Atta, Dal)",
     "shelf": "Middle shelf",
+    "image_url": "https://picsum.photos/seed/fortune-mustard-oil/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 22
   },
@@ -727,6 +769,7 @@
     "aisle_number": 4,
     "section": "Staples (Rice, Atta, Dal)",
     "shelf": "Bottom shelf",
+    "image_url": "https://picsum.photos/seed/tata-iodized-salt/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 52
   },
@@ -744,6 +787,7 @@
     "aisle_number": 2,
     "section": "Snacks & Biscuits",
     "shelf": "Bottom shelf",
+    "image_url": "https://picsum.photos/seed/britannia-50-50/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 39
   },
@@ -761,6 +805,7 @@
     "aisle_number": 5,
     "section": "Personal Care",
     "shelf": "Middle shelf",
+    "image_url": "https://picsum.photos/seed/dabur-vatika-hair-oil/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 24
   },
@@ -778,6 +823,7 @@
     "aisle_number": 2,
     "section": "Snacks & Biscuits",
     "shelf": "Bottom shelf",
+    "image_url": "https://picsum.photos/seed/parle-marie-gold/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 28
   },
@@ -795,6 +841,7 @@
     "aisle_number": 4,
     "section": "Staples (Rice, Atta, Dal)",
     "shelf": "Middle shelf",
+    "image_url": "https://picsum.photos/seed/mtr-pongal-mix/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 16
   },
@@ -812,6 +859,7 @@
     "aisle_number": 2,
     "section": "Snacks & Biscuits",
     "shelf": "Middle shelf",
+    "image_url": "https://picsum.photos/seed/kissan-strawberry-jam/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 19
   },
@@ -829,6 +877,7 @@
     "aisle_number": 2,
     "section": "Snacks & Biscuits",
     "shelf": "Bottom shelf",
+    "image_url": "https://picsum.photos/seed/nestle-munch/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 70
   },
@@ -846,6 +895,7 @@
     "aisle_number": 5,
     "section": "Personal Care",
     "shelf": "Middle shelf",
+    "image_url": "https://picsum.photos/seed/itc-fiama-shower-gel/200/200",
     "stock_status": "In Stock",
     "quantity_remaining": 26
   }

@@ -10,6 +10,7 @@ import {
     ActivityIndicator,
     TextInput,
     Platform,
+    Image,
 } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as Haptics from "expo-haptics";
@@ -153,6 +154,7 @@ export default function ScannerScreen() {
             discounted_price: product.discounted_price ?? null,
             aisle: product.aisle ?? "",
             store_id: product.store_id ?? "",
+            image: product.image_url ?? null,
         };
         for (let i = 0; i < quantity; i++) dispatch(addItem(p));
         closeSheet();
@@ -224,6 +226,13 @@ export default function ScannerScreen() {
                         <View style={styles.sheet}>
                             {product && (
                                 <>
+                                    {product.image_url ? (
+                                        <Image
+                                            source={{ uri: product.image_url }}
+                                            style={styles.sheetProductImage}
+                                            resizeMode="cover"
+                                        />
+                                    ) : null}
                                     <Text style={styles.sheetName}>{product.name}</Text>
                                     <Text style={styles.sheetBrand}>{product.brand}</Text>
                                     <View style={styles.sheetRow}>
@@ -361,6 +370,13 @@ export default function ScannerScreen() {
                     <View style={styles.sheet}>
                         {product && (
                             <>
+                                {product.image_url ? (
+                                    <Image
+                                        source={{ uri: product.image_url }}
+                                        style={styles.sheetProductImage}
+                                        resizeMode="cover"
+                                    />
+                                ) : null}
                                 <Text style={styles.sheetName}>{product.name}</Text>
                                 <Text style={styles.sheetBrand}>{product.brand}</Text>
                                 <View style={styles.sheetRow}>
@@ -473,6 +489,13 @@ export default function ScannerScreen() {
                     <View style={styles.sheet}>
                         {product && (
                             <>
+                                {product.image_url ? (
+                                    <Image
+                                        source={{ uri: product.image_url }}
+                                        style={styles.sheetProductImage}
+                                        resizeMode="cover"
+                                    />
+                                ) : null}
                                 <Text style={styles.sheetName}>{product.name}</Text>
                                 <Text style={styles.sheetBrand}>{product.brand}</Text>
                                 <View style={styles.sheetRow}>
@@ -615,6 +638,13 @@ export default function ScannerScreen() {
                 <View style={styles.sheet}>
                     {product && (
                         <>
+                            {product.image_url ? (
+                                <Image
+                                    source={{ uri: product.image_url }}
+                                    style={styles.sheetProductImage}
+                                    resizeMode="cover"
+                                />
+                            ) : null}
                             <Text style={styles.sheetName}>{product.name}</Text>
                             <Text style={styles.sheetBrand}>{product.brand}</Text>
 
@@ -836,6 +866,13 @@ const styles = StyleSheet.create({
         borderTopRightRadius: 20,
         padding: 20,
         paddingBottom: 40,
+    },
+    sheetProductImage: {
+        width: "100%",
+        height: 160,
+        borderRadius: 12,
+        marginBottom: 12,
+        backgroundColor: "#F5F5F5",
     },
     sheetName: { fontSize: 18, fontWeight: "700", color: TEXT },
     sheetBrand: { fontSize: 13, color: MUTED, marginTop: 4 },

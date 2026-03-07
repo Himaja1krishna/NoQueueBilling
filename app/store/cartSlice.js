@@ -9,6 +9,7 @@ function cartItemFromProduct(product) {
         quantity: 1,
         aisle: product.aisle ?? "",
         store_id: product.store_id ?? "",
+        image: product.image ?? product.image_url ?? null,
     };
 }
 
