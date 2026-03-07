@@ -44,9 +44,9 @@ const MOCK_OFFERS = [
     { offer_id: "OFFER-003", store_id: "STORE_001", title: "Rs 50 off Beverages", description: "Flat Rs 50 off on tea and coffee.", discount_pct: 0, discount_flat: 50, product_ids: ["PROD-0003", "PROD-0018"], valid_until: "2026-12-31T23:59:00Z", code: "BEV50" },
 ];
 const MOCK_RECOMMENDATIONS = [
-    { product_id: "PROD-0001", store_id: "STORE_001", name: "Amul Butter 500g", brand: "Amul", base_price: 285, discounted_price: 242, aisle: "2A", reason: "Pairs with your last scan" },
-    { product_id: "PROD-0002", store_id: "STORE_001", name: "Fortune Sunlite Refined Sunflower Oil 1L", brand: "Fortune", base_price: 245, discounted_price: null, aisle: "1A", reason: "Based on weekly purchase" },
-    { product_id: "PROD-0003", store_id: "STORE_001", name: "Tata Tea Gold 500g", brand: "Tata", base_price: 320, discounted_price: 279, aisle: "3A", reason: "Bought every few days" },
+    { product_id: "PROD-0001", store_id: "STORE_001", name: "Amul Butter 500g", brand: "Amul", base_price: 285, discounted_price: 242, aisle: "Aisle 3", reason: "Pairs with your last scan", image_url: "https://picsum.photos/seed/amul-butter/200/200" },
+    { product_id: "PROD-0002", store_id: "STORE_001", name: "Fortune Sunlite Refined Sunflower Oil 1L", brand: "Fortune", base_price: 245, discounted_price: null, aisle: "Aisle 4", reason: "Based on weekly purchase", image_url: "https://picsum.photos/seed/fortune-oil/200/200" },
+    { product_id: "PROD-0003", store_id: "STORE_001", name: "Tata Tea Gold 500g", brand: "Tata", base_price: 320, discounted_price: 279, aisle: "Aisle 1", reason: "Bought every few days", image_url: "https://picsum.photos/seed/tata-tea-gold/200/200" },
 ];
 const MOCK_LAST_ORDER = {
     transaction_id: "TXN_MOCK001",

@@ -33,6 +33,7 @@ export default function RecommendationCard({ item, onPress }) {
                 discounted_price: item.discounted_price ?? null,
                 aisle: item.aisle ?? "",
                 store_id: selectedStore ?? "",
+                image: item.image_url ?? item.image ?? null,
             })
         );
     };
@@ -44,9 +45,9 @@ export default function RecommendationCard({ item, onPress }) {
             activeOpacity={0.95}
         >
             <View style={styles.imageWrap}>
-                {item.image_url ? (
+                {(item.image_url || item.image) ? (
                     <Image
-                        source={{ uri: item.image_url }}
+                        source={{ uri: item.image_url || item.image }}
                         style={styles.productImage}
                         resizeMode="cover"
                     />
