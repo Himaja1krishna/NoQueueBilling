@@ -4,6 +4,7 @@ import {
     Text,
     StyleSheet,
     FlatList,
+    ScrollView,
     TextInput,
     TouchableOpacity,
     Animated,
@@ -20,10 +21,12 @@ const MUTED = "#888888";
 const BORDER = "#EBEBEB";
 const H_PADDING = 16;
 
-const PROMPT_CHIPS = [
-    "Where is the organic honey? 🍯",
-    "Do I have enough points? ⭐",
-    "What's on offer today? 🏷️",
+const QUICK_QUESTIONS = [
+    { label: "🧈 Where is Amul Butter?",  text: "Where is Amul Butter?" },
+    { label: "🛒 Any offers today?",       text: "Any offers today?" },
+    { label: "🌾 Which aisle is atta?",    text: "Which aisle is atta?" },
+    { label: "💰 Price of Parle-G?",       text: "What is the price of Parle-G?" },
+    { label: "🥛 Where is milk?",          text: "Where is milk?" },
 ];
 
 function LiveDot() {
@@ -177,17 +180,34 @@ export default function ChatbotScreen() {
     };
 
     const renderListEmpty = () => (
-        <View style={styles.chipsWrap}>
-            {PROMPT_CHIPS.map((chip, i) => (
-                <TouchableOpacity
-                    key={i}
-                    style={styles.chip}
-                    onPress={() => handleChipPress(chip)}
-                    disabled={sending}
-                >
-                    <Text style={styles.chipText}>{chip}</Text>
-                </TouchableOpacity>
-            ))}
+        <View style={styles.emptyWrap}>
+            {/* Bot avatar */}
+            <View style={styles.botAvatar}>
+                <Text style={styles.botAvatarIcon}>🤖</Text>
+            </View>
+            <Text style={styles.emptyTitle}>Hi! I'm your store assistant</Text>
+            <Text style={styles.emptySubtitle}>
+                Ask me anything about products, prices, aisles, or today's offers.
+            </Text>
+
+            <Text style={styles.quickLabel}>Quick questions</Text>
+            <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.pillRow}
+            >
+                {QUICK_QUESTIONS.map((q, i) => (
+                    <TouchableOpacity
+                        key={i}
+                        style={[styles.pill, sending && styles.pillDisabled]}
+                        onPress={() => handleChipPress(q.text)}
+                        disabled={sending}
+                        activeOpacity={0.75}
+                    >
+                        <Text style={styles.pillText}>{q.label}</Text>
+                    </TouchableOpacity>
+                ))}
+            </ScrollView>
         </View>
     );
 
@@ -263,17 +283,61 @@ const styles = StyleSheet.create({
     },
     listContent: { padding: H_PADDING, paddingBottom: 24 },
     listContentEmpty: { flexGrow: 1, justifyContent: "center" },
-    chipsWrap: { alignItems: "center", gap: 12 },
-    chip: {
-        backgroundColor: "#fff",
-        paddingHorizontal: 20,
-        paddingVertical: 14,
-        borderRadius: 24,
-        borderWidth: 1,
-        borderColor: BORDER,
-        maxWidth: "90%",
+
+    // Empty state
+    emptyWrap: { alignItems: "center", paddingHorizontal: H_PADDING, paddingTop: 16 },
+    botAvatar: {
+        width: 72,
+        height: 72,
+        borderRadius: 36,
+        backgroundColor: "#E8F8EF",
+        alignItems: "center",
+        justifyContent: "center",
+        marginBottom: 14,
     },
-    chipText: { fontSize: 14, color: TEXT },
+    botAvatarIcon: { fontSize: 36 },
+    emptyTitle: {
+        fontSize: 18,
+        fontWeight: "700",
+        color: TEXT,
+        marginBottom: 6,
+        textAlign: "center",
+    },
+    emptySubtitle: {
+        fontSize: 14,
+        color: MUTED,
+        textAlign: "center",
+        lineHeight: 20,
+        marginBottom: 28,
+    },
+    quickLabel: {
+        fontSize: 12,
+        fontWeight: "600",
+        color: MUTED,
+        letterSpacing: 0.8,
+        textTransform: "uppercase",
+        alignSelf: "flex-start",
+        marginBottom: 10,
+    },
+    pillRow: {
+        flexDirection: "row",
+        gap: 10,
+        paddingRight: H_PADDING,
+    },
+    pill: {
+        backgroundColor: "#fff",
+        borderWidth: 1.5,
+        borderColor: ACCENT,
+        borderRadius: 24,
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+    },
+    pillDisabled: { opacity: 0.5 },
+    pillText: {
+        fontSize: 14,
+        color: ACCENT,
+        fontWeight: "600",
+    },
     msgRowRight: { flexDirection: "row", justifyContent: "flex-end", marginBottom: 12 },
     msgRowLeft: { flexDirection: "row", justifyContent: "flex-start", marginBottom: 12 },
     bubbleUser: {
