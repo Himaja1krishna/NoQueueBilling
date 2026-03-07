@@ -35,10 +35,23 @@ exports.handler = async (event) => {
         const dataStr = await response.Body.transformToString();
         const products = JSON.parse(dataStr);
 
-        // 3. Filter by Barcode and Store_ID
-        const product = products.find(p => 
+        // 3. Filter by Barcode and Store_ID (exact match first)
+        let product = products.find(p => 
             p.barcode === barcode && p.store_id === store_id
         );
+
+        // Demo fallback: any real barcode not in mock data still returns a product.
+        // Use the barcode digits as a numeric seed so the same scan always picks
+        // the same item (deterministic), while different barcodes pick different items.
+        if (!product) {
+            const storeProducts = products.filter(p => p.store_id === store_id);
+            if (storeProducts.length > 0) {
+                const seed = barcode
+                    .split("")
+                    .reduce((acc, c) => acc + c.charCodeAt(0), 0);
+                product = storeProducts[seed % storeProducts.length];
+            }
+        }
 
         if (!product) {
             return {

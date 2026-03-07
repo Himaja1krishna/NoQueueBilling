@@ -89,6 +89,29 @@ Resources:
       CodeUri: GetOffersFunction
     Metadata:
       SamResourceId: GetOffersFunction
+  GetStoreProductsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: getStoreProducts.handler
+      Events:
+        GetStoreProducts:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: NoQueueApi
+            Path: /store/{store_id}/products
+            Method: get
+      Environment:
+        Variables:
+          MOCK_DATA_BUCKET:
+            Ref: MockDataBucket
+      Policies:
+      - S3ReadPolicy:
+          BucketName:
+            Ref: MockDataBucket
+      CodeUri: GetStoreProductsFunction
+    Metadata:
+      SamResourceId: GetStoreProductsFunction
   GetRecommendationsFunction:
     Type: AWS::Serverless::Function
     Properties:

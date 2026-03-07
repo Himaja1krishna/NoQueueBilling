@@ -67,10 +67,15 @@ exports.handler = async (event) => {
                     if (!product) return null;
                     const score = item.score ?? item.relevance;
                     return {
+                        product_id: product.product_id,
                         name: product.name,
+                        brand: product.brand,
+                        base_price: product.base_price,
+                        discounted_price: product.discounted_price,
                         price: product.discounted_price ?? product.base_price,
                         reason: scoreToReason(score),
-                        image: product.image ?? null,
+                        image_url: product.image_url ?? product.image ?? null,
+                        image: product.image_url ?? product.image ?? null,
                         aisle: product.aisle,
                     };
                 })
@@ -79,10 +84,15 @@ exports.handler = async (event) => {
 
         if (!results || results.length === 0) {
             const fallback = products.slice(0, 5).map((p) => ({
+                product_id: p.product_id,
                 name: p.name,
+                brand: p.brand,
+                base_price: p.base_price,
+                discounted_price: p.discounted_price,
                 price: p.discounted_price ?? p.base_price,
                 reason: "Pairs with your last scan",
-                image: p.image ?? null,
+                image_url: p.image_url ?? p.image ?? null,
+                image: p.image_url ?? p.image ?? null,
                 aisle: p.aisle,
             }));
             results = fallback;

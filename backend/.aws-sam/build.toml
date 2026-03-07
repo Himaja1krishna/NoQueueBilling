@@ -7,6 +7,6 @@ architecture = "x86_64"
 handler = "getProduct.handler"
 manifest_hash = ""
 packagetype = "Zip"
-functions = ["GetProductFunction", "GetOffersFunction", "GetRecommendationsFunction", "GetOrdersFunction", "InitiatePaymentFunction", "ConfirmPaymentFunction", "VerifyReceiptFunction", "GetReceiptFunction", "ChatbotFunction"]
+functions = ["GetProductFunction", "GetOffersFunction", "GetStoreProductsFunction", "GetRecommendationsFunction", "GetOrdersFunction", "InitiatePaymentFunction", "ConfirmPaymentFunction", "VerifyReceiptFunction", "GetReceiptFunction", "ChatbotFunction"]
 
 [layer_build_definitions]
