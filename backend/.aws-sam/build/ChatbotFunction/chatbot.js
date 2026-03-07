@@ -50,13 +50,18 @@ exports.handler = async (event) => {
         };
     }
 
-    // Load products and offers in parallel from S3
-    const [allProducts, allOffers] = await Promise.all([
-        getS3Json(bucket, "mock-store/products.json"),
-        getS3Json(bucket, "mock-store/offers.json"),
-    ]);
+    let allProducts = [];
+    let allOffers = [];
+    try {
+        [allProducts, allOffers] = await Promise.all([
+            getS3Json(bucket, "mock-store/products.json"),
+            getS3Json(bucket, "mock-store/offers.json"),
+        ]);
+    } catch (s3Err) {
+        console.error("S3 load error:", s3Err);
+    }
 
-    // Filter by store_id if provided, take up to 50 products
+    // Filter by store_id if provided
     const products = store_id
         ? (allProducts || []).filter((p) => p.store_id === store_id)
         : (allProducts || []);
@@ -108,7 +113,7 @@ Aisle 7 – Frozen & Refrigerated Foods
 Aisle 8 – Fruits & Vegetables (near exit)
 
 PRODUCT CATALOG:
-${productCatalog}
+${productCatalog || "Product catalog unavailable."}
 
 CURRENT OFFERS & DISCOUNTS:
 ${activeOffers || "No active offers at the moment."}
@@ -126,23 +131,21 @@ INSTRUCTIONS:
 
     try {
         const command = new InvokeModelCommand({
-            modelId: "anthropic.claude-3-haiku-20240307-v1:0",
+            modelId: "amazon.nova-lite-v1:0",
             contentType: "application/json",
             accept: "application/json",
             body: JSON.stringify({
-                anthropic_version: "bedrock-2023-05-31",
-                max_tokens: 300,
-                system: systemPrompt,
-                messages: [{ role: "user", content: message }],
+                system: [{ text: systemPrompt }],
+                messages: [{ role: "user", content: [{ text: message }] }],
+                inferenceConfig: { maxTokens: 300 },
             }),
         });
 
         const response = await bedrock.send(command);
         const responseBody = JSON.parse(new TextDecoder().decode(response.body));
         const reply =
-            responseBody.content && responseBody.content[0] && responseBody.content[0].text
-                ? responseBody.content[0].text
-                : "Sorry, I couldn't generate a response.";
+            responseBody?.output?.message?.content?.[0]?.text
+                ?? "Sorry, I couldn't generate a response.";
 
         return {
             statusCode: 200,
