@@ -43,6 +43,29 @@ export default function ScannerScreen() {
 
     const [webCameraStarted, setWebCameraStarted] = useState(false);
     const [webCameraError, setWebCameraError] = useState(null);
+    const [webCameraRequesting, setWebCameraRequesting] = useState(false);
+
+    const handleStartWebCamera = async () => {
+        setWebCameraError(null);
+        setWebCameraRequesting(true);
+        try {
+            await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: "environment" },
+                audio: false,
+            });
+            setWebCameraStarted(true);
+        } catch (err) {
+            const isDenied =
+                err?.name === "NotAllowedError" || err?.name === "PermissionDeniedError";
+            setWebCameraError(
+                isDenied
+                    ? "Camera access was denied.\n\nTo enable: tap the lock icon (🔒) in your browser's address bar → Site settings → Camera → Allow → then refresh the page."
+                    : `Camera unavailable: ${err?.message || "Unknown error"}`
+            );
+        } finally {
+            setWebCameraRequesting(false);
+        }
+    };
 
     const dispatch = useAppDispatch();
     const { total, items } = useAppSelector((s) => s.cart);
@@ -145,18 +168,20 @@ export default function ScannerScreen() {
                 <View style={styles.centered}>
                     <Text style={styles.permissionText}>Use camera to scan a barcode</Text>
                     <TouchableOpacity
-                        style={styles.permBtn}
-                        onPress={() => {
-                            setWebCameraError(null);
-                            setWebCameraStarted(true);
-                        }}
+                        style={[styles.permBtn, webCameraRequesting && styles.demoBtnDisabled]}
+                        onPress={handleStartWebCamera}
+                        disabled={webCameraRequesting}
                     >
-                        <Text style={styles.permBtnText}>Start camera</Text>
+                        {webCameraRequesting ? (
+                            <ActivityIndicator size="small" color="#fff" />
+                        ) : (
+                            <Text style={styles.permBtnText}>Allow camera &amp; start scanning</Text>
+                        )}
                     </TouchableOpacity>
                     {webCameraError ? (
-                        <Text style={[styles.demoError, { marginTop: 12, textAlign: "center" }]}>
-                            {webCameraError}
-                        </Text>
+                        <View style={styles.webPermErrorBox}>
+                            <Text style={styles.webPermErrorText}>{webCameraError}</Text>
+                        </View>
                     ) : null}
                     <View style={styles.demoStripStandalone}>
                         <Text style={styles.demoLabel}>Or demo with barcode</Text>
@@ -751,6 +776,20 @@ const styles = StyleSheet.create({
     demoBtnText: { color: "#fff", fontWeight: "700", fontSize: 14 },
     demoHint: { fontSize: 11, color: "rgba(255,255,255,0.6)", marginTop: 8 },
     demoError: { fontSize: 12, color: "#f87171", marginTop: 6 },
+    webPermErrorBox: {
+        marginTop: 16,
+        width: "100%",
+        maxWidth: 320,
+        backgroundColor: "rgba(200,0,0,0.85)",
+        padding: 14,
+        borderRadius: 10,
+    },
+    webPermErrorText: {
+        fontSize: 13,
+        color: "#fff",
+        lineHeight: 20,
+        textAlign: "center",
+    },
     demoStripStandalone: {
         marginTop: 24,
         width: "100%",
