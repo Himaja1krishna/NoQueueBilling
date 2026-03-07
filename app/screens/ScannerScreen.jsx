@@ -9,6 +9,7 @@ import {
     Modal,
     ActivityIndicator,
     TextInput,
+    Platform,
 } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as Haptics from "expo-haptics";
@@ -17,6 +18,7 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useAppSelector, useAppDispatch } from "../store";
 import { addItem } from "../store/cartSlice";
 import { getProduct } from "../services/api";
+import WebBarcodeScanner from "../components/WebBarcodeScanner";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 const BRACKET_COLOR = "#FFE500";
@@ -38,6 +40,9 @@ export default function ScannerScreen() {
     const [demoBarcode, setDemoBarcode] = useState("");
     const [lookupError, setLookupError] = useState("");
     const laserAnim = useRef(new Animated.Value(0)).current;
+
+    const [webCameraStarted, setWebCameraStarted] = useState(false);
+    const [webCameraError, setWebCameraError] = useState(null);
 
     const dispatch = useAppDispatch();
     const { total, items } = useAppSelector((s) => s.cart);
@@ -86,7 +91,9 @@ export default function ScannerScreen() {
         try {
             await new Promise((r) => setTimeout(r, 200));
             const result = await getProduct(trimmed, selectedStore);
-            await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            if (Platform.OS !== "web") {
+                await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            }
             setProduct(result);
             setQuantity(1);
             setSheetVisible(true);
@@ -130,6 +137,270 @@ export default function ScannerScreen() {
 
     const price = product?.discounted_price ?? product?.base_price ?? 0;
     const displayPrice = quantity * price;
+
+    // --- Web: use browser camera (getUserMedia) for demo scanning ---
+    if (Platform.OS === "web") {
+        if (!webCameraStarted) {
+            return (
+                <View style={styles.centered}>
+                    <Text style={styles.permissionText}>Use camera to scan a barcode</Text>
+                    <TouchableOpacity
+                        style={styles.permBtn}
+                        onPress={() => {
+                            setWebCameraError(null);
+                            setWebCameraStarted(true);
+                        }}
+                    >
+                        <Text style={styles.permBtnText}>Start camera</Text>
+                    </TouchableOpacity>
+                    {webCameraError ? (
+                        <Text style={[styles.demoError, { marginTop: 12, textAlign: "center" }]}>
+                            {webCameraError}
+                        </Text>
+                    ) : null}
+                    <View style={styles.demoStripStandalone}>
+                        <Text style={styles.demoLabel}>Or demo with barcode</Text>
+                        <View style={styles.demoRow}>
+                            <TextInput
+                                style={styles.demoInput}
+                                placeholder="e.g. 8901030869944"
+                                placeholderTextColor={MUTED}
+                                value={demoBarcode}
+                                onChangeText={(t) => {
+                                    setDemoBarcode(t);
+                                    setLookupError("");
+                                }}
+                                keyboardType="number-pad"
+                                editable={!processing}
+                            />
+                            <TouchableOpacity
+                                style={[styles.demoBtn, processing && styles.demoBtnDisabled]}
+                                onPress={handleDemoLookup}
+                                disabled={processing}
+                            >
+                                <Text style={styles.demoBtnText}>Look up</Text>
+                            </TouchableOpacity>
+                        </View>
+                        {lookupError ? (
+                            <Text style={styles.demoError}>{lookupError}</Text>
+                        ) : (
+                            <Text style={styles.demoHintStandalone}>
+                                Try: 8901030869944 (Amul), 8901060745678 (Parle-G)
+                            </Text>
+                        )}
+                    </View>
+                    {processing && (
+                        <View style={StyleSheet.absoluteFill}>
+                            <ActivityIndicator size="large" color="#fff" style={{ marginTop: 20 }} />
+                        </View>
+                    )}
+                    <Modal visible={sheetVisible} transparent animationType="slide" onRequestClose={closeSheet}>
+                        <TouchableOpacity style={styles.sheetBackdrop} activeOpacity={1} onPress={closeSheet} />
+                        <View style={styles.sheet}>
+                            {product && (
+                                <>
+                                    <Text style={styles.sheetName}>{product.name}</Text>
+                                    <Text style={styles.sheetBrand}>{product.brand}</Text>
+                                    <View style={styles.sheetRow}>
+                                        <View style={styles.aisleBadge}>
+                                            <Text style={styles.aisleText}>Aisle {product.aisle}</Text>
+                                        </View>
+                                        {product.is_on_sale && (
+                                            <View style={styles.offBadge}>
+                                                <Text style={styles.offBadgeText}>
+                                                    {product.discounted_price != null
+                                                        ? `${Math.round((1 - product.discounted_price / product.base_price) * 100)}% OFF`
+                                                        : "ON SALE"}
+                                                </Text>
+                                            </View>
+                                        )}
+                                    </View>
+                                    <View style={styles.priceRow}>
+                                        {product.is_on_sale && product.base_price != null && (
+                                            <Text style={styles.basePrice}>₹{product.base_price}</Text>
+                                        )}
+                                        <Text style={styles.discPrice}>
+                                            ₹{product?.discounted_price ?? product?.base_price ?? 0}
+                                        </Text>
+                                    </View>
+                                    <View style={styles.quantityRow}>
+                                        <TouchableOpacity
+                                            style={styles.qtyBtn}
+                                            onPress={() => setQuantity((q) => Math.max(1, q - 1))}
+                                        >
+                                            <Text style={styles.qtyBtnText}>−</Text>
+                                        </TouchableOpacity>
+                                        <Text style={styles.qtyNum}>{quantity}</Text>
+                                        <TouchableOpacity style={styles.qtyBtn} onPress={() => setQuantity((q) => q + 1)}>
+                                            <Text style={styles.qtyBtnText}>+</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                    <TouchableOpacity style={styles.addBtn} onPress={handleAddToCart}>
+                                        <Text style={styles.addBtnText}>
+                                            Add to Cart · ₹{quantity * (product?.discounted_price ?? product?.base_price ?? 0)}
+                                        </Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={styles.scanAgainBtn} onPress={closeSheet}>
+                                        <Text style={styles.scanAgainText}>Look up another</Text>
+                                    </TouchableOpacity>
+                                </>
+                            )}
+                        </View>
+                    </Modal>
+                </View>
+            );
+        }
+        // Web with camera on: show scanner + overlay + demo strip + sheet
+        return (
+            <View style={styles.container}>
+                <WebBarcodeScanner
+                    onScan={(text) => handleBarCodeScanned({ data: text })}
+                    onError={(err) => setWebCameraError(err?.message || "Camera unavailable")}
+                    paused={scanned}
+                />
+                <View style={styles.overlay} pointerEvents="none">
+                    <View style={[styles.corner, styles.topLeft]} />
+                    <View style={[styles.corner, styles.topRight]} />
+                    <View style={[styles.corner, styles.bottomLeft]} />
+                    <View style={[styles.corner, styles.bottomRight]} />
+                    <Animated.View
+                        style={[styles.laserLine, { transform: [{ translateY: laserTranslate }] }]}
+                    />
+                </View>
+                {webCameraError ? (
+                    <View style={styles.webCameraErrorBanner}>
+                        <Text style={styles.webCameraErrorText}>{webCameraError}</Text>
+                        <Text style={styles.demoHintStandalone}>Use barcode lookup below.</Text>
+                    </View>
+                ) : null}
+                <View style={styles.cartPill}>
+                    <Text style={styles.cartPillText}>
+                        ₹{total} | {itemCount} items
+                    </Text>
+                </View>
+                <TouchableOpacity
+                    style={styles.webStopCameraBtn}
+                    onPress={() => {
+                        setWebCameraStarted(false);
+                        setWebCameraError(null);
+                    }}
+                >
+                    <Text style={styles.permBtnText}>Stop camera</Text>
+                </TouchableOpacity>
+                <View style={styles.demoStrip}>
+                    <Text style={styles.demoLabel}>Or type barcode</Text>
+                    <View style={styles.demoRow}>
+                        <TextInput
+                            style={styles.demoInput}
+                            placeholder="e.g. 8901030869944"
+                            placeholderTextColor={MUTED}
+                            value={demoBarcode}
+                            onChangeText={(t) => {
+                                setDemoBarcode(t);
+                                setLookupError("");
+                            }}
+                            keyboardType="number-pad"
+                            editable={!processing}
+                        />
+                        <TouchableOpacity
+                            style={[styles.demoBtn, processing && styles.demoBtnDisabled]}
+                            onPress={handleDemoLookup}
+                            disabled={processing}
+                        >
+                            <Text style={styles.demoBtnText}>Look up</Text>
+                        </TouchableOpacity>
+                    </View>
+                    {lookupError ? (
+                        <Text style={styles.demoError}>{lookupError}</Text>
+                    ) : (
+                        <Text style={styles.demoHint}>Try: 8901030869944 (Amul), 8901060745678 (Parle-G)</Text>
+                    )}
+                </View>
+                {processing && (
+                    <View style={styles.processingOverlay}>
+                        <ActivityIndicator size="large" color="#fff" />
+                        <Text style={styles.processingText}>Processing...</Text>
+                    </View>
+                )}
+                <Modal
+                    visible={sheetVisible}
+                    transparent
+                    animationType="slide"
+                    onRequestClose={closeSheet}
+                >
+                    <TouchableOpacity
+                        style={styles.sheetBackdrop}
+                        activeOpacity={1}
+                        onPress={closeSheet}
+                    />
+                    <View style={styles.sheet}>
+                        {product && (
+                            <>
+                                <Text style={styles.sheetName}>{product.name}</Text>
+                                <Text style={styles.sheetBrand}>{product.brand}</Text>
+                                <View style={styles.sheetRow}>
+                                    <View style={styles.aisleBadge}>
+                                        <Text style={styles.aisleText}>Aisle {product.aisle}</Text>
+                                    </View>
+                                    {product.is_on_sale && (
+                                        <View style={styles.offBadge}>
+                                            <Text style={styles.offBadgeText}>
+                                                {product.discounted_price != null
+                                                    ? `${Math.round(
+                                                          (1 - product.discounted_price / product.base_price) * 100
+                                                      )}% OFF`
+                                                    : "ON SALE"}
+                                            </Text>
+                                        </View>
+                                    )}
+                                </View>
+                                <View style={styles.priceRow}>
+                                    {product.is_on_sale && product.base_price != null && (
+                                        <Text style={styles.basePrice}>₹{product.base_price}</Text>
+                                    )}
+                                    <Text style={styles.discPrice}>₹{price}</Text>
+                                </View>
+                                {product.coupon_eligible && (
+                                    <View style={styles.dealBadge}>
+                                        <Text style={styles.dealBadgeText}>Deal Applied</Text>
+                                    </View>
+                                )}
+                                {product.ai_metadata?.frequently_bought_with?.length > 0 && (
+                                    <Text style={styles.freqText}>
+                                        Often bought with{" "}
+                                        {product.ai_metadata.frequently_bought_with.length === 1
+                                            ? "1 related item"
+                                            : `${product.ai_metadata.frequently_bought_with.length} related items`}
+                                    </Text>
+                                )}
+                                <View style={styles.quantityRow}>
+                                    <TouchableOpacity
+                                        style={styles.qtyBtn}
+                                        onPress={() => setQuantity((q) => Math.max(1, q - 1))}
+                                    >
+                                        <Text style={styles.qtyBtnText}>−</Text>
+                                    </TouchableOpacity>
+                                    <Text style={styles.qtyNum}>{quantity}</Text>
+                                    <TouchableOpacity
+                                        style={styles.qtyBtn}
+                                        onPress={() => setQuantity((q) => q + 1)}
+                                    >
+                                        <Text style={styles.qtyBtnText}>+</Text>
+                                    </TouchableOpacity>
+                                </View>
+                                <TouchableOpacity style={styles.addBtn} onPress={handleAddToCart}>
+                                    <Text style={styles.addBtnText}>Add to Cart · ₹{displayPrice}</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.scanAgainBtn} onPress={closeSheet}>
+                                    <Text style={styles.scanAgainText}>Scan Again</Text>
+                                </TouchableOpacity>
+                            </>
+                        )}
+                    </View>
+                </Modal>
+            </View>
+        );
+    }
 
     if (!permission?.granted) {
         return (
@@ -489,6 +760,25 @@ const styles = StyleSheet.create({
         borderRadius: 12,
     },
     demoHintStandalone: { fontSize: 11, color: "rgba(255,255,255,0.6)", marginTop: 8 },
+    webCameraErrorBanner: {
+        position: "absolute",
+        top: 56,
+        left: 16,
+        right: 16,
+        backgroundColor: "rgba(200,0,0,0.9)",
+        padding: 12,
+        borderRadius: 8,
+    },
+    webCameraErrorText: { fontSize: 14, color: "#fff", fontWeight: "600" },
+    webStopCameraBtn: {
+        position: "absolute",
+        top: 56,
+        right: 16,
+        backgroundColor: "rgba(0,0,0,0.6)",
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        borderRadius: 8,
+    },
     processingOverlay: {
         ...StyleSheet.absoluteFillObject,
         backgroundColor: "rgba(0,0,0,0.6)",
