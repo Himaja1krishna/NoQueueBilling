@@ -6,7 +6,7 @@ resolve_s3 = true
 s3_prefix = "noqueue-backend"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
-parameter_overrides = "MockDataBucket=\"noqueue-mock-data-himaja\" PersonifyCampaignArn=\"\" FraudDetectorId=\"\" KmsKeyId=\"1813ea5d-cebe-4cf7-9285-5f0408b6a682\" RzpKeyId=\"rzp_test_SMGdQCyn3EUMo5\""
+parameter_overrides = "MockDataBucket=\"noqueue-mock-data-himaja\" PersonifyCampaignArn=\"rn:aws:personalize:ap-south-1:436735645542:campaign/noqueue-recommendations\" FraudDetectorId=\"\" KmsKeyId=\"1813ea5d-cebe-4cf7-9285-5f0408b6a682\" RzpKeyId=\"rzp_test_SOg5WJFZzIYudG\""
 image_repositories = []
 
 [default.global.parameters]

@@ -138,6 +138,19 @@ exports.handler = async (event) => {
 
         const signature = Buffer.from(signResponse.Signature).toString("base64");
 
+        // Signed token for QR: base64(JSON.stringify({ transaction_id, signature }))
+        const signedToken = Buffer.from(
+            JSON.stringify({ transaction_id, signature }),
+            "utf8"
+        ).toString("base64");
+
+        // QR URL: guard scans → browser opens → exit gate page loads → auto-verifies.
+        // Set EXIT_GATE_URL (or EXIT_GATE_BASE_URL) to your hosted exit-gate/index.html base URL.
+        const exitGateBase = (process.env.EXIT_GATE_URL || process.env.EXIT_GATE_BASE_URL || "").trim();
+        const qrUrl = exitGateBase
+            ? (exitGateBase.replace(/\?.*$/, "").replace(/\/$/, "") + "?token=" + encodeURIComponent(signedToken))
+            : null;
+
         // Step 5: Save to S3 at orders/{user_id}/{transaction_id}.json
         const s3Key = `orders/${user_id}/${transaction_id}.json`;
         const s3Body = JSON.stringify({ ...receipt, signature });
@@ -152,7 +165,12 @@ exports.handler = async (event) => {
         return {
             statusCode: 200,
             headers: corsHeaders,
-            body: JSON.stringify({ receipt, signature }),
+            body: JSON.stringify({
+                receipt,
+                signature,
+                signed_token: signedToken,
+                ...(qrUrl && { qr_url: qrUrl }),
+            }),
         };
     } catch (error) {
         console.error("confirmPayment Error:", error);

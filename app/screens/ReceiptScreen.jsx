@@ -32,6 +32,25 @@ const monoFont = Platform.OS === "ios" ? "Menlo" : "monospace";
 
 const DASHED_DIVIDER = "- - - - - - - - - - - - -";
 
+function base64Encode(str) {
+    try {
+        if (typeof btoa !== "undefined") return btoa(unescape(encodeURIComponent(str)));
+    } catch (_) {}
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    const bytes = new TextEncoder().encode(str);
+    let result = "";
+    for (let i = 0; i < bytes.length; i += 3) {
+        const a = bytes[i];
+        const b = bytes[i + 1];
+        const c = bytes[i + 2];
+        result += chars[a >> 2];
+        result += chars[((a & 3) << 4) | (b >> 4)];
+        result += b !== undefined ? chars[((b & 15) << 2) | (c >> 6)] : "=";
+        result += c !== undefined ? chars[c & 63] : "=";
+    }
+    return result;
+}
+
 function formatTimeLeft(ms) {
     if (ms <= 0) return "00:00";
     const totalSec = Math.floor(ms / 1000);
@@ -133,7 +152,16 @@ export default function ReceiptScreen() {
         } catch (_) {}
     };
 
-    const qrValue = JSON.stringify({ transaction_id, signature });
+    const qrValue = (() => {
+        const payload = { transaction_id, signature };
+        const exitGateUrl = process.env.EXPO_PUBLIC_EXIT_GATE_URL?.trim();
+        if (exitGateUrl) {
+            const token = base64Encode(JSON.stringify(payload));
+            const base = exitGateUrl.replace(/\?.*$/, "").replace(/\/$/, "");
+            return `${base}?token=${encodeURIComponent(token)}`;
+        }
+        return JSON.stringify(payload);
+    })();
     const expired = timeLeftMs !== null && timeLeftMs <= 0;
     const lowTime = timeLeftMs !== null && timeLeftMs > 0 && timeLeftMs < 5 * 60 * 1000;
 

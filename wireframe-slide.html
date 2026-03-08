@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wireframes - Proposed Solution</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #111;
+      margin: 0 0 28px 0;
+      text-align: center;
+    }
+    .flow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 960px;
+    }
+    .screen {
+      width: 120px;
+      padding: 14px 10px;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      background: #fafafa;
+      text-align: center;
+    }
+    .screen .icon {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 8px;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+    .screen .name { font-weight: 600; color: #111; font-size: 13px; margin-bottom: 2px; }
+    .screen .desc { font-size: 10px; color: #666; line-height: 1.2; }
+    .arrow {
+      color: #00B14F;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    @media (max-width: 700px) {
+      .arrow { display: none; }
+      .flow { gap: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Wireframes / Mock diagrams of the proposed solution</h1>
+  <div class="flow">
+    <div class="screen">
+      <div class="icon">👤</div>
+      <div class="name">Auth</div>
+      <div class="desc">Sign in / Store</div>
+    </div>
+    <span class="arrow">→</span>
+    <div class="screen">
+      <div class="icon">🏠</div>
+      <div class="name">Home</div>
+      <div class="desc">Offers, Recommendations, Last order</div>
+    </div>
+    <span class="arrow">→</span>
+    <div class="screen">
+      <div class="icon">📷</div>
+      <div class="name">Scanner</div>
+      <div class="desc">Scan product</div>
+    </div>
+    <span class="arrow">→</span>
+    <div class="screen">
+      <div class="icon">🛒</div>
+      <div class="name">Cart</div>
+      <div class="desc">Review cart</div>
+    </div>
+    <span class="arrow">→</span>
+    <div class="screen">
+      <div class="icon">💬</div>
+      <div class="name">Chatbot</div>
+      <div class="desc">Ask (offers, aisle, price)</div>
+    </div>
+    <span class="arrow">→</span>
+    <div class="screen">
+      <div class="icon">✓</div>
+      <div class="name">Payment & Receipt</div>
+      <div class="desc">Pay → Receipt</div>
+    </div>
+  </div>
+</body>
+</html>

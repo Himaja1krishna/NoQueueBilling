@@ -3,453 +3,462 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Exit Gate — NoQueueBilling</title>
+  <title>NoQueueBilling — Exit Gate</title>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { height: 100%; overflow: hidden; font-family: system-ui, -apple-system, sans-serif; }
+    html, body { height: 100%; overflow: hidden; font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif; -webkit-text-size-adjust: 100%; background: #000; }
 
-    .state { display: none; position: fixed; inset: 0; flex-direction: column; align-items: center; justify-content: center; padding: 24px; overflow: auto; }
+    .state { display: none; position: fixed; inset: 0; flex-direction: column; align-items: center; justify-content: center; padding: 32px; overflow: auto; text-align: center; }
     .state.active { display: flex; }
 
-    /* STATE 1: READY */
-    #ready { background: #fff; }
-    #ready .logo { font-size: 22px; font-weight: 800; color: #111; letter-spacing: -0.5px; margin-bottom: 32px; }
-    #ready .scan-icon { width: 140px; height: 140px; margin-bottom: 20px; color: #999; }
-    #ready .scan-icon svg { width: 100%; height: 100%; }
-    #ready h1 { font-size: 24px; font-weight: 700; color: #111; margin-bottom: 8px; }
-    #ready .sub { font-size: 14px; color: #888; margin-bottom: 24px; }
-    .pulse-dot { width: 12px; height: 12px; border-radius: 50%; background: #00B14F; animation: pulse 1.5s ease-in-out infinite; }
-    @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.1); } }
+    /* CAMERA SCANNER — Ready state */
+    #ready { background: #000; padding: 0; }
+    #camera-wrap {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    #video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      position: absolute;
+      inset: 0;
+    }
+    #canvas { display: none; }
 
-    /* STATE 2a: VALID */
-    #valid { background: #00FF87; color: #fff; }
-    #valid .check { font-size: 120px; line-height: 1; margin-bottom: 12px; color: #fff; }
-    #valid h1 { font-size: 48px; font-weight: 700; margin-bottom: 12px; color: #fff; }
-    #valid .order-id { font-family: ui-monospace, monospace; font-size: 14px; margin-bottom: 8px; opacity: 0.95; }
-    #valid .paid-line { font-size: 16px; margin-bottom: 4px; }
-    #valid .time-ago { font-size: 13px; opacity: 0.9; margin-bottom: 20px; }
-    #valid .divider { width: 80%; height: 1px; background: rgba(255,255,255,0.4); margin-bottom: 20px; }
-    #valid .view-bill { background: #fff; color: #111; border: none; padding: 16px 24px; font-size: 17px; font-weight: 600; border-radius: 12px; cursor: pointer; }
-    #valid .view-bill:hover { opacity: 0.95; }
-    #valid .reset-countdown { position: absolute; bottom: 20px; right: 24px; font-size: 13px; opacity: 0.9; }
+    /* Overlay on top of camera */
+    #camera-overlay {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+    #camera-header {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      padding: 20px 24px 16px;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    #camera-header .logo { font-size: 22px; font-weight: 800; color: #fff; letter-spacing: -0.5px; }
+    #camera-header .dot { width: 10px; height: 10px; border-radius: 50%; background: #00B14F; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.6;transform:scale(1.1)} }
 
-    /* STATE 2b: QR_EXPIRED */
-    #expired { background: #FF9500; color: #fff; }
-    #expired .clock { font-size: 80px; line-height: 1; margin-bottom: 12px; }
-    #expired h1 { font-size: 48px; font-weight: 700; margin-bottom: 12px; }
-    #expired .expires-line { font-size: 14px; margin-bottom: 6px; }
-    #expired .valid-line { font-size: 13px; margin-bottom: 6px; }
-    #expired .ask-line { font-size: 13px; margin-top: 12px; }
-    #expired .reset-countdown { position: absolute; bottom: 20px; right: 24px; font-size: 13px; opacity: 0.9; }
+    /* QR scan frame */
+    #scan-frame {
+      width: 260px;
+      height: 260px;
+      position: relative;
+    }
+    #scan-frame::before, #scan-frame::after,
+    #scan-frame .corner-br, #scan-frame .corner-bl {
+      content: '';
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      border-color: #00B14F;
+      border-style: solid;
+    }
+    #scan-frame::before { top: 0; left: 0; border-width: 4px 0 0 4px; border-radius: 4px 0 0 0; }
+    #scan-frame::after { top: 0; right: 0; border-width: 4px 4px 0 0; border-radius: 0 4px 0 0; }
+    #scan-frame .corner-bl { bottom: 0; left: 0; border-width: 0 0 4px 4px; border-radius: 0 0 0 4px; }
+    #scan-frame .corner-br { bottom: 0; right: 0; border-width: 0 4px 4px 0; border-radius: 0 0 4px 0; }
 
-    /* STATE 2c: ALREADY_USED */
-    #already-used { background: #FF3B3B; color: #fff; }
-    #already-used .cross { font-size: 120px; line-height: 1; margin-bottom: 12px; }
-    #already-used h1 { font-size: 48px; font-weight: 700; margin-bottom: 12px; }
-    #already-used .sub { font-size: 14px; margin-bottom: 8px; }
-    #already-used .bold-line { font-size: 13px; font-weight: 700; }
-    #already-used .reset-countdown { position: absolute; bottom: 20px; right: 24px; font-size: 13px; opacity: 0.9; }
+    /* Laser scan line */
+    #laser {
+      position: absolute;
+      top: 0; left: 4px; right: 4px;
+      height: 2px;
+      background: linear-gradient(to right, transparent, #00B14F, transparent);
+      animation: scan 2s ease-in-out infinite;
+    }
+    @keyframes scan { 0%{top:4px} 50%{top:calc(100% - 6px)} 100%{top:4px} }
 
-    /* STATE 2d: FAKE_RECEIPT */
-    #fake { background: #FF3B3B; color: #fff; }
-    #fake .cross { font-size: 120px; line-height: 1; margin-bottom: 12px; }
-    #fake h1 { font-size: 48px; font-weight: 700; margin-bottom: 12px; }
-    #fake .sub { font-size: 14px; margin-bottom: 8px; }
-    #fake .bold-line { font-size: 13px; font-weight: 700; margin-bottom: 24px; }
-    #fake .dismiss { background: #fff; color: #c00; border: none; padding: 14px 28px; font-size: 16px; font-weight: 600; border-radius: 10px; cursor: pointer; }
+    #camera-footer {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      padding: 24px;
+      background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+    }
+    #camera-footer h1 { font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+    #camera-footer p { font-size: 15px; color: rgba(255,255,255,0.7); margin-bottom: 20px; }
 
-    /* Loading */
-    #loading { background: #f5f5f5; color: #333; }
-    #loading .spinner { width: 48px; height: 48px; border: 4px solid #ddd; border-top-color: #00B14F; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 16px; }
+    #btn-start-camera {
+      background: #00B14F;
+      color: #fff;
+      border: none;
+      padding: 16px 36px;
+      font-size: 18px;
+      font-weight: 700;
+      border-radius: 12px;
+      cursor: pointer;
+      pointer-events: all;
+      box-shadow: 0 4px 16px rgba(0,177,79,0.4);
+    }
+    #btn-start-camera:hover { background: #009d46; }
+    #camera-hint { font-size: 13px; color: rgba(255,255,255,0.5); margin-top: 12px; pointer-events: all; }
+
+    /* Error state for camera permission */
+    #camera-error { display: none; background: rgba(0,0,0,0.85); border-radius: 12px; padding: 24px; max-width: 360px; pointer-events: all; }
+    #camera-error p { color: #fff; font-size: 15px; margin-bottom: 16px; line-height: 1.5; }
+    #camera-error button { background: #00B14F; color: #fff; border: none; padding: 12px 24px; font-size: 15px; font-weight: 600; border-radius: 8px; cursor: pointer; }
+
+    /* LOADING */
+    #loading { background: #fff; }
+    #loading .spinner { width: 56px; height: 56px; border: 4px solid #e5e5e5; border-top-color: #00B14F; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 20px; }
+    #loading p { font-size: 20px; color: #888; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* STATE 3: GUARD BILL VIEW */
-    #bill { background: #f7f7f7; justify-content: flex-start; padding: 0; }
-    #bill .bill-header { width: 100%; padding: 16px 20px; background: #fff; border-bottom: 1px solid #eee; display: flex; align-items: center; }
-    #bill .bill-title { font-size: 18px; font-weight: 700; color: #111; flex: 1; text-align: center; }
-    #bill .bill-actions { display: flex; gap: 12px; align-items: center; min-width: 100px; justify-content: flex-end; }
-    #bill .back-btn { background: none; border: none; font-size: 16px; color: #00B14F; font-weight: 600; cursor: pointer; min-width: 80px; }
-    #bill .print-btn { background: #00B14F; color: #fff; border: none; padding: 10px 18px; font-size: 14px; font-weight: 600; border-radius: 8px; cursor: pointer; }
-    #bill .bill-paper { width: 100%; max-width: 640px; margin: 20px auto; padding: 24px; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
-    #bill .store-name { font-size: 18px; font-weight: 700; text-align: center; margin-bottom: 4px; }
-    #bill .info-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; }
-    #bill .info-label { color: #888; }
-    #bill .info-value { font-family: ui-monospace, monospace; color: #111; }
-    #bill .dashed { border: none; border-top: 1px dashed #ccc; margin: 14px 0; }
-    #bill table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
-    #bill th { text-align: left; padding: 8px 6px; font-size: 11px; text-transform: uppercase; color: #888; font-weight: 600; border-bottom: 1px solid #eee; }
-    #bill th:nth-child(4), #bill th:nth-child(5), #bill th:nth-child(6) { text-align: right; }
-    #bill td { padding: 10px 6px; border-bottom: 1px solid #f0f0f0; }
-    #bill td:nth-child(4), #bill td:nth-child(5), #bill td:nth-child(6) { text-align: right; }
-    #bill tr:nth-child(even) { background: #FAFAFA; }
-    #bill tr.discounted { background: #f0fbf4; }
-    #bill .item-original { font-size: 11px; color: #bbb; text-decoration: line-through; }
-    #bill .totals { margin-top: 16px; }
-    #bill .totals-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; }
-    #bill .totals-final { font-size: 16px; font-weight: 700; margin-top: 8px; padding-top: 12px; border-top: 2px solid #111; }
-    #bill .totals-savings { color: #00B14F; font-weight: 600; }
-    #bill .footer-check { display: flex; align-items: center; gap: 8px; margin: 8px 0; font-size: 13px; color: #00B14F; font-weight: 600; }
-    #bill .footer-qr { margin-top: 16px; }
-    #bill .footer-ts { font-size: 12px; color: #888; margin-top: 12px; }
-    @media print { #bill .bill-header .print-btn, #bill .back-btn { display: none; } body { background: #fff; } }
+    /* VALID — Green */
+    #valid { background: #00B14F; color: #fff; }
+    #valid .icon { font-size: 110px; line-height: 1; margin-bottom: 16px; }
+    #valid h1 { font-size: 52px; font-weight: 800; margin-bottom: 20px; letter-spacing: 0.02em; }
+    #valid .customer-name { font-size: 22px; margin-bottom: 8px; }
+    #valid .total-amount { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+    #valid .transaction-id { font-size: 13px; opacity: 0.7; margin-bottom: 8px; font-family: ui-monospace, monospace; }
+    #valid .item-count { font-size: 18px; margin-bottom: 8px; }
+    #valid .exit-approved { font-size: 16px; opacity: 0.85; margin-bottom: 8px; font-weight: 600; background: rgba(0,0,0,0.12); display: inline-block; padding: 6px 18px; border-radius: 20px; }
+    #valid .timestamp { font-size: 13px; opacity: 0.6; margin-bottom: 32px; }
+
+    /* ALREADY USED — Red */
+    #already-used { background: #EF4444; color: #fff; }
+    #already-used .icon { font-size: 110px; line-height: 1; margin-bottom: 16px; }
+    #already-used h1 { font-size: 52px; font-weight: 800; margin-bottom: 16px; }
+    #already-used .sub { font-size: 20px; margin-bottom: 12px; }
+    #already-used .first-used { font-size: 15px; opacity: 0.85; margin-bottom: 20px; }
+    #already-used .do-not-allow { font-size: 18px; font-weight: 700; background: rgba(0,0,0,0.25); padding: 10px 24px; border-radius: 10px; display: inline-block; margin-bottom: 32px; }
+
+    /* EXPIRED — Orange */
+    #expired { background: #F59E0B; color: #fff; }
+    #expired .icon { font-size: 110px; line-height: 1; margin-bottom: 16px; }
+    #expired h1 { font-size: 52px; font-weight: 800; margin-bottom: 16px; }
+    #expired .sub { font-size: 20px; margin-bottom: 12px; }
+    #expired .ask-line { font-size: 16px; opacity: 0.85; margin-bottom: 32px; }
+
+    /* FAKE/INVALID — Dark */
+    #fake { background: #111111; color: #fff; }
+    #fake .icon { font-size: 110px; line-height: 1; margin-bottom: 16px; }
+    #fake h1 { font-size: 52px; font-weight: 800; margin-bottom: 16px; }
+    #fake .sig-fail { font-size: 20px; color: #EF4444; margin-bottom: 8px; }
+    #fake .tamper { font-size: 16px; color: #888; margin-bottom: 20px; }
+    #fake .alert-sec { font-size: 18px; font-weight: 700; background: #EF4444; color: #fff; padding: 10px 24px; border-radius: 10px; display: inline-block; margin-bottom: 32px; }
+
+    /* Scan Next button */
+    .btn-next { display: none; }
+    .btn-next.visible { display: inline-block; }
+    .btn-next button { background: #fff; color: #111; border: none; padding: 16px 32px; font-size: 18px; font-weight: 700; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
+    .btn-next button:hover { opacity: 0.95; }
+    #fake .btn-next button { background: #333; color: #fff; }
+
+    @media (min-width: 768px) {
+      #valid h1, #already-used h1, #expired h1, #fake h1 { font-size: 64px; }
+      #scan-frame { width: 320px; height: 320px; }
+    }
   </style>
 </head>
 <body>
-  <!-- Paste API Gateway base URL (no trailing slash): -->
-  <script>var API_URL = '';</script>
+  <script>var API_URL = 'https://k4fxz1nep2.execute-api.ap-south-1.amazonaws.com/prod';</script>
 
+  <!-- READY — Camera scanner -->
   <div id="ready" class="state active">
-    <div class="logo">NoQueueBilling</div>
-    <div class="scan-icon" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 12v4a2 2 0 01-2 2h-4M7 21H5a2 2 0 01-2-2v-4" stroke-linecap="round" stroke-linejoin="round"/>
-        <rect x="7" y="7" width="10" height="10" rx="1"/><path d="M7 12h10M12 7v10" stroke-linecap="round"/>
-      </svg>
-    </div>
-    <h1>Ready to Scan</h1>
-    <p class="sub">Point scanner at customer's QR code</p>
-    <div class="pulse-dot" aria-hidden="true"></div>
-  </div>
+    <div id="camera-wrap">
+      <video id="video" autoplay playsinline muted></video>
+      <canvas id="canvas"></canvas>
+      <div id="camera-overlay">
+        <div id="camera-header">
+          <span class="logo">NoQueueBilling</span>
+          <span class="dot" id="live-dot" style="display:none"></span>
+        </div>
 
-  <div id="loading" class="state">
-    <div class="spinner"></div>
-    <p>Verifying receipt…</p>
-  </div>
+        <!-- shown before camera starts -->
+        <div id="pre-camera">
+          <div id="camera-footer" style="position:relative;background:none;padding:0;text-align:center;">
+            <h1 style="color:#fff;margin-bottom:12px;">Exit Gate Scanner</h1>
+            <p style="color:rgba(255,255,255,0.7);margin-bottom:24px;">Tap to start the camera and scan customer QR codes</p>
+            <button id="btn-start-camera" onclick="startCamera()">&#128247; Start Camera</button>
+            <p id="camera-hint">Or ask customer to show QR &amp; point device camera at it</p>
+          </div>
+        </div>
 
-  <div id="valid" class="state">
-    <div class="check">✓</div>
-    <h1>VALID — GO THROUGH</h1>
-    <p class="order-id" id="valid-order-id"></p>
-    <p class="paid-line" id="valid-paid-line"></p>
-    <p class="time-ago" id="valid-time-ago"></p>
-    <div class="divider"></div>
-    <button type="button" class="view-bill" id="btn-view-bill">👁 View Bill Details</button>
-    <p class="reset-countdown" id="valid-reset"></p>
-  </div>
+        <!-- shown after camera starts -->
+        <div id="post-camera" style="display:none;flex-direction:column;align-items:center;width:100%;height:100%;justify-content:space-between;padding:80px 24px 32px;">
+          <div id="scan-frame">
+            <div class="corner-bl"></div>
+            <div class="corner-br"></div>
+            <div id="laser"></div>
+          </div>
+          <div>
+            <p style="color:rgba(255,255,255,0.8);font-size:16px;font-weight:600;">Point camera at customer's QR code</p>
+            <p style="color:rgba(255,255,255,0.5);font-size:13px;margin-top:6px;">Receipt QR will be auto-scanned</p>
+          </div>
+        </div>
 
-  <div id="expired" class="state">
-    <div class="clock">⏱</div>
-    <h1>QR EXPIRED</h1>
-    <p class="expires-line" id="expired-at"></p>
-    <p class="valid-line" id="expired-valid-line"></p>
-    <p class="ask-line">Ask customer to show Bill Details tab</p>
-    <p class="reset-countdown" id="expired-reset"></p>
-  </div>
-
-  <div id="already-used" class="state">
-    <div class="cross">✗</div>
-    <h1>ALREADY USED</h1>
-    <p class="sub" id="already-used-sub"></p>
-    <p class="bold-line">Do not allow entry</p>
-    <p class="reset-countdown" id="already-used-reset"></p>
-  </div>
-
-  <div id="fake" class="state">
-    <div class="cross">✗</div>
-    <h1>INVALID RECEIPT</h1>
-    <p class="sub">Signature verification failed — possible fake</p>
-    <p class="bold-line">Detain and call store manager</p>
-    <button type="button" class="dismiss" id="btn-fake-dismiss">Dismiss</button>
-  </div>
-
-  <div id="bill" class="state">
-    <div class="bill-header">
-      <button type="button" class="back-btn" id="btn-bill-back">← Back</button>
-      <span class="bill-title">Bill Verification</span>
-      <div class="bill-actions">
-        <button type="button" class="print-btn" id="btn-print">Print</button>
+        <!-- camera permission error -->
+        <div id="camera-error">
+          <p id="camera-error-msg">Camera access was denied. Please allow camera access to scan QR codes.</p>
+          <button onclick="startCamera()">Try Again</button>
+        </div>
       </div>
     </div>
-    <div class="bill-paper" id="bill-content"></div>
+  </div>
+
+  <!-- LOADING -->
+  <div id="loading" class="state">
+    <div class="spinner"></div>
+    <p>Verifying receipt...</p>
+  </div>
+
+  <!-- VALID -->
+  <div id="valid" class="state">
+    <div class="icon">&#9989;</div>
+    <h1>VERIFIED</h1>
+    <p class="customer-name" id="valid-customer">—</p>
+    <p class="total-amount" id="valid-total">—</p>
+    <p class="item-count" id="valid-items">—</p>
+    <p class="exit-approved">&#10003; Exit Approved</p>
+    <p class="transaction-id" id="valid-txn">—</p>
+    <p class="timestamp" id="valid-ts">—</p>
+    <div class="btn-next" id="valid-btn-next"><button type="button" onclick="scanNext()">&#128247; Scan Next Customer</button></div>
+  </div>
+
+  <!-- ALREADY USED -->
+  <div id="already-used" class="state">
+    <div class="icon">&#10060;</div>
+    <h1>ALREADY USED</h1>
+    <p class="sub">This receipt was already scanned</p>
+    <p class="first-used" id="already-used-time">—</p>
+    <p class="do-not-allow">Do not allow exit</p>
+    <div class="btn-next" id="already-used-btn-next"><button type="button" onclick="scanNext()">&#128247; Scan Next Customer</button></div>
+  </div>
+
+  <!-- EXPIRED -->
+  <div id="expired" class="state">
+    <div class="icon">&#8987;</div>
+    <h1>RECEIPT EXPIRED</h1>
+    <p class="sub">This QR code has expired (1 hour limit)</p>
+    <p class="ask-line">Ask customer to contact store manager</p>
+    <div class="btn-next" id="expired-btn-next"><button type="button" onclick="scanNext()">&#128247; Scan Next Customer</button></div>
+  </div>
+
+  <!-- FAKE -->
+  <div id="fake" class="state">
+    <div class="icon">&#9888;&#65039;</div>
+    <h1>INVALID RECEIPT</h1>
+    <p class="sig-fail">Signature verification failed</p>
+    <p class="tamper">This receipt may be fake or tampered</p>
+    <p class="alert-sec">Alert store security</p>
+    <div class="btn-next" id="fake-btn-next"><button type="button" onclick="scanNext()">&#128247; Scan Next Customer</button></div>
   </div>
 
   <script>
   (function () {
-    var RESET_SEC = 8;
-    var currentTransactionId = null;
-    var currentSignature = null;
-    var lastValidReceipt = null;
+    var RESET_DELAY_MS = 3000;
+    var nextTimer = null;
+    var scanning = false;
+    var scanCooldown = false;
+    var videoEl = document.getElementById('video');
+    var canvasEl = document.getElementById('canvas');
+    var stream = null;
+    var rafId = null;
 
+    /* ---- UI helpers ---- */
     function show(id) {
       document.querySelectorAll('.state').forEach(function (el) {
         el.classList.toggle('active', el.id === id);
       });
+      if (id === 'ready' && scanning) startScanLoop();
     }
 
-    function clearUrl() {
-      window.history.replaceState({}, document.title, window.location.pathname || '/');
+    function showNextButton(panelId) {
+      clearNextTimer();
+      var btn = document.getElementById(panelId + '-btn-next');
+      if (btn) {
+        nextTimer = setTimeout(function () { btn.classList.add('visible'); }, RESET_DELAY_MS);
+      }
     }
+
+    function clearNextTimer() {
+      if (nextTimer) { clearTimeout(nextTimer); nextTimer = null; }
+      document.querySelectorAll('.btn-next').forEach(function (el) { el.classList.remove('visible'); });
+    }
+
+    window.scanNext = function () {
+      clearNextTimer();
+      scanCooldown = false;
+      show('ready');
+    };
 
     function formatDateTime(iso) {
       if (!iso) return '—';
-      var d = new Date(iso);
-      var day = d.getDate();
-      var months = 'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec';
-      var month = months.split(' ')[d.getMonth()];
-      var year = d.getFullYear();
-      var h = d.getHours();
-      var m = d.getMinutes();
-      var ampm = h >= 12 ? 'PM' : 'AM';
-      h = h % 12 || 12;
-      return day + ' ' + month + ' ' + year + ', ' + h + ':' + (m < 10 ? '0' : '') + m + ' ' + ampm;
+      return new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
     }
 
-    function formatTimeOnly(iso) {
-      if (!iso) return '—';
-      var d = new Date(iso);
-      var h = d.getHours();
-      var m = d.getMinutes();
-      var ampm = h >= 12 ? 'PM' : 'AM';
-      h = h % 12 || 12;
-      return h + ':' + (m < 10 ? '0' : '') + m + ' ' + ampm;
+    /* ---- Camera / QR scanning ---- */
+    window.startCamera = function () {
+      document.getElementById('camera-error').style.display = 'none';
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+        .then(function (s) {
+          stream = s;
+          videoEl.srcObject = s;
+          videoEl.play();
+          scanning = true;
+          document.getElementById('pre-camera').style.display = 'none';
+          document.getElementById('post-camera').style.display = 'flex';
+          document.getElementById('live-dot').style.display = 'inline-block';
+          startScanLoop();
+        })
+        .catch(function (err) {
+          var msg = 'Camera access denied. Please allow camera permissions and try again.';
+          if (err && err.name === 'NotFoundError') msg = 'No camera found on this device.';
+          document.getElementById('camera-error-msg').textContent = msg;
+          document.getElementById('camera-error').style.display = 'block';
+          document.getElementById('pre-camera').style.display = 'block';
+        });
+    };
+
+    function startScanLoop() {
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(tick);
     }
 
-    function timeAgo(iso) {
-      if (!iso) return '';
-      var sec = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
-      if (sec < 60) return sec + ' seconds ago';
-      if (sec < 3600) return Math.floor(sec / 60) + ' minutes ago';
-      if (sec < 86400) return Math.floor(sec / 3600) + ' hours ago';
-      return Math.floor(sec / 86400) + ' days ago';
-    }
-
-    function escapeHtml(s) {
-      var div = document.createElement('div');
-      div.textContent = s == null ? '' : s;
-      return div.innerHTML;
-    }
-
-    function startCountdown(elId, onDone) {
-      var el = document.getElementById(elId);
-      if (!el) return;
-      var sec = RESET_SEC;
-      el.textContent = 'Resetting in ' + sec + 's...';
-      var t = setInterval(function () {
-        sec--;
-        el.textContent = 'Resetting in ' + sec + 's...';
-        if (sec <= 0) {
-          clearInterval(t);
-          onDone();
+    function tick() {
+      if (!scanning || scanCooldown) { rafId = requestAnimationFrame(tick); return; }
+      if (videoEl.readyState === videoEl.HAVE_ENOUGH_DATA) {
+        var w = videoEl.videoWidth, h = videoEl.videoHeight;
+        if (w && h) {
+          canvasEl.width = w; canvasEl.height = h;
+          var ctx = canvasEl.getContext('2d');
+          ctx.drawImage(videoEl, 0, 0, w, h);
+          var imageData = ctx.getImageData(0, 0, w, h);
+          if (typeof jsQR !== 'undefined') {
+            var code = jsQR(imageData.data, w, h, { inversionAttempts: 'dontInvert' });
+            if (code && code.data) {
+              onQRDetected(code.data);
+              return;
+            }
+          }
         }
-      }, 1000);
-      return t;
+      }
+      rafId = requestAnimationFrame(tick);
+    }
+
+    function onQRDetected(raw) {
+      scanCooldown = true;
+      if (rafId) cancelAnimationFrame(rafId);
+
+      // Extract token from URL or raw JSON
+      var token = null;
+      try {
+        if (raw.indexOf('token=') !== -1) {
+          var urlParams = new URLSearchParams(raw.indexOf('?') !== -1 ? raw.split('?')[1] : raw);
+          token = urlParams.get('token');
+        }
+        if (!token) {
+          var parsed = JSON.parse(raw);
+          if (parsed && parsed.transaction_id && parsed.signature) {
+            token = btoa(unescape(encodeURIComponent(JSON.stringify({ transaction_id: parsed.transaction_id, signature: parsed.signature }))));
+          }
+        }
+      } catch (_) {}
+
+      if (!token) {
+        scanCooldown = false;
+        rafId = requestAnimationFrame(tick);
+        return;
+      }
+
+      verifyToken(token);
+    }
+
+    /* ---- API verification ---- */
+    function verifyToken(token) {
+      show('loading');
+      var base = (typeof API_URL !== 'undefined' && API_URL) ? API_URL.replace(/\/$/, '') : 'https://k4fxz1nep2.execute-api.ap-south-1.amazonaws.com/prod';
+
+      fetch(base + '/receipt/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: token })
+      })
+        .then(function (res) { return res.json().then(function (d) { return { ok: res.ok, data: d }; }); })
+        .then(function (r) {
+          var data = r.data;
+          var status = data && data.status;
+          var reason = data && data.reason;
+          var valid = data && data.valid === true;
+
+          if (status === 'VALID' || (valid && (reason === 'APPROVED' || reason === 'VALID'))) {
+            var receipt = data.receipt || data;
+            var txnId = (receipt && receipt.transaction_id) || data.transaction_id;
+            if (txnId && (!receipt || !receipt.items)) {
+              getReceipt(txnId, function (rec) { setValid(rec || { transaction_id: txnId }); });
+            } else {
+              setValid(receipt || { transaction_id: txnId });
+            }
+            return;
+          }
+          if (status === 'ALREADY_USED' || reason === 'ALREADY_USED') { setAlreadyUsed(data); return; }
+          if (status === 'QR_EXPIRED' || reason === 'QR_EXPIRED') { setExpired(); return; }
+          setFake();
+        })
+        .catch(function () { setFake(); });
     }
 
     function getReceipt(tid, cb) {
-      if (!API_URL || !tid) { cb(null); return; }
-      var url = API_URL.replace(/\/$/, '') + '/receipt/' + encodeURIComponent(tid);
-      fetch(url, { method: 'GET', headers: { 'Content-Type': 'application/json' } })
+      var base = (typeof API_URL !== 'undefined' && API_URL) ? API_URL.replace(/\/$/, '') : '';
+      if (!base || !tid) { cb(null); return; }
+      fetch(base + '/receipt/' + encodeURIComponent(tid))
         .then(function (r) { return r.ok ? r.json() : null; })
-        .then(cb)
-        .catch(function () { cb(null); });
+        .then(cb).catch(function () { cb(null); });
     }
 
-    function showValid(receipt) {
-      lastValidReceipt = receipt;
+    function setValid(receipt) {
       show('valid');
-      document.getElementById('valid-order-id').textContent = receipt ? receipt.transaction_id : currentTransactionId;
-      if (receipt) {
-        document.getElementById('valid-paid-line').textContent = 'Paid at ' + formatTimeOnly(receipt.paid_at) + ' · ₹' + (receipt.final_total != null ? Number(receipt.final_total).toFixed(2) : '0.00');
-        document.getElementById('valid-time-ago').textContent = timeAgo(receipt.paid_at);
-      } else {
-        document.getElementById('valid-paid-line').textContent = '';
-        document.getElementById('valid-time-ago').textContent = '';
-      }
-      if (window._resetTimer) clearInterval(window._resetTimer);
-      window._resetTimer = startCountdown('valid-reset', function () {
-        clearUrl();
-        show('ready');
-      });
+      document.getElementById('valid-customer').textContent = (receipt && receipt.customer_name) ? receipt.customer_name : '—';
+      document.getElementById('valid-total').textContent = (receipt && receipt.final_total != null) ? '₹' + Number(receipt.final_total).toFixed(2) : (receipt && receipt.cart_total != null) ? '₹' + Number(receipt.cart_total).toFixed(2) : '—';
+      document.getElementById('valid-txn').textContent = (receipt && receipt.transaction_id) ? receipt.transaction_id : '—';
+      var count = receipt && receipt.items && receipt.items.length ? receipt.items.reduce(function (s, i) { return s + (i.quantity || 1); }, 0) : null;
+      document.getElementById('valid-items').textContent = count != null ? count + ' items' : '—';
+      document.getElementById('valid-ts').textContent = (receipt && receipt.paid_at) ? formatDateTime(receipt.paid_at) : '—';
+      showNextButton('valid');
     }
 
-    function showExpired(expiredAt, receipt) {
-      show('expired');
-      document.getElementById('expired-at').textContent = 'This QR code expired at ' + formatDateTime(expiredAt);
-      document.getElementById('expired-valid-line').textContent = receipt && receipt.paid_at
-        ? 'Customer paid ' + timeAgo(receipt.paid_at) + ' — QR valid for 1 hour only'
-        : 'QR valid for 1 hour only';
-      if (window._resetTimer) clearInterval(window._resetTimer);
-      window._resetTimer = startCountdown('expired-reset', function () {
-        clearUrl();
-        show('ready');
-      });
-    }
-
-    function showAlreadyUsed() {
+    function setAlreadyUsed(data) {
       show('already-used');
-      document.getElementById('already-used-sub').textContent = 'This QR was already scanned at this gate';
-      if (window._resetTimer) clearInterval(window._resetTimer);
-      window._resetTimer = startCountdown('already-used-reset', function () {
-        clearUrl();
-        show('ready');
-      });
+      document.getElementById('already-used-time').textContent = (data && data.used_at) ? 'First used at ' + formatDateTime(data.used_at) : 'This receipt was already scanned at the gate';
+      showNextButton('already-used');
     }
 
-    function showFake() {
-      show('fake');
-    }
+    function setExpired() { show('expired'); showNextButton('expired'); }
+    function setFake() { show('fake'); showNextButton('fake'); }
 
-    function renderBill(receipt) {
-      var html = '';
-      html += '<p class="store-name">' + escapeHtml(receipt.store_name || 'Store') + '</p>';
-      html += '<div class="info-row"><span class="info-label">Order ID</span><span class="info-value">' + escapeHtml(receipt.transaction_id) + '</span></div>';
-      html += '<div class="info-row"><span class="info-label">Date & Time</span><span class="info-value">' + formatDateTime(receipt.paid_at) + '</span></div>';
-      html += '<div class="info-row"><span class="info-label">Payment</span><span class="info-value">' + escapeHtml(receipt.payment_method || 'UPI') + '</span></div>';
-      html += '<hr class="dashed">';
-      html += '<table><thead><tr><th>Item Name</th><th>Brand</th><th>Aisle</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr></thead><tbody>';
-      (receipt.items || []).forEach(function (item, i) {
-        var unit = item.discounted_price != null ? item.discounted_price : item.base_price;
-        var total = (unit || 0) * (item.quantity || 1);
-        var disc = item.discounted_price != null && item.discounted_price < (item.base_price || 0);
-        html += '<tr' + (disc ? ' class="discounted"' : '') + '>';
-        html += '<td>';
-        if (disc && item.base_price) html += '<div class="item-original">₹' + Number(item.base_price).toFixed(2) + '</div>';
-        html += escapeHtml(item.name) + '</td>';
-        html += '<td>' + escapeHtml(item.brand || '') + '</td>';
-        html += '<td>' + escapeHtml(item.aisle || '') + '</td>';
-        html += '<td>' + (item.quantity || 1) + '</td>';
-        html += '<td>₹' + Number(unit || 0).toFixed(2) + '</td>';
-        html += '<td>₹' + total.toFixed(2) + '</td></tr>';
-      });
-      html += '</tbody></table>';
-      html += '<hr class="dashed">';
-      var subtotal = (receipt.final_total != null ? receipt.final_total : 0) - (receipt.gst_amount != null ? receipt.gst_amount : 0);
-      html += '<div class="totals"><div class="totals-row"><span>Subtotal</span><span>₹' + subtotal.toFixed(2) + '</span></div>';
-      if (receipt.savings_total > 0) html += '<div class="totals-row totals-savings"><span>Savings</span><span>-₹' + Number(receipt.savings_total).toFixed(2) + '</span></div>';
-      html += '<div class="totals-row"><span>GST 5%</span><span>₹' + Number(receipt.gst_amount || 0).toFixed(2) + '</span></div>';
-      html += '<div class="totals-row totals-final"><span>FINAL TOTAL</span><span>₹' + Number(receipt.final_total || 0).toFixed(2) + '</span></div></div>';
-      html += '<div class="footer-check">✓ Payment verified by NoQueueBilling</div>';
-      html += '<div class="footer-check">✓ KMS Signature: Valid</div>';
-      html += '<div class="footer-check">✓ Receipt used: 1 time</div>';
-      html += '<p class="footer-ts">Verified at ' + new Date().toLocaleString() + '</p>';
-      return html;
-    }
-
-    function showBillView() {
-      var r = lastValidReceipt;
-      if (!r) {
-        getReceipt(currentTransactionId, function (receipt) {
-          if (receipt) {
-            lastValidReceipt = receipt;
-            document.getElementById('bill-content').innerHTML = renderBill(receipt);
-          } else {
-            document.getElementById('bill-content').innerHTML = '<p>Could not load receipt.</p>';
-          }
-          show('bill');
-        });
-      } else {
-        document.getElementById('bill-content').innerHTML = renderBill(r);
-        show('bill');
-      }
-    }
-
-    document.getElementById('btn-view-bill').addEventListener('click', function () {
-      if (window._resetTimer) clearInterval(window._resetTimer);
-      showBillView();
-    });
-
-    document.getElementById('btn-bill-back').addEventListener('click', function () {
-      show('valid');
-      if (lastValidReceipt || currentTransactionId) {
-        document.getElementById('valid-order-id').textContent = (lastValidReceipt && lastValidReceipt.transaction_id) || currentTransactionId;
-        if (lastValidReceipt) {
-          document.getElementById('valid-paid-line').textContent = 'Paid at ' + formatTimeOnly(lastValidReceipt.paid_at) + ' · ₹' + (lastValidReceipt.final_total != null ? Number(lastValidReceipt.final_total).toFixed(2) : '0.00');
-          document.getElementById('valid-time-ago').textContent = timeAgo(lastValidReceipt.paid_at);
-        }
-        if (window._resetTimer) clearInterval(window._resetTimer);
-        window._resetTimer = startCountdown('valid-reset', function () {
-          clearUrl();
-          show('ready');
-        });
-      } else {
-        clearUrl();
-        show('ready');
-      }
-    });
-
-    document.getElementById('btn-print').addEventListener('click', function () {
-      window.print();
-    });
-
-    document.getElementById('btn-fake-dismiss').addEventListener('click', function () {
-      clearUrl();
-      show('ready');
-    });
-
-    function verifyReceipt(transactionId, signature) {
-      currentTransactionId = transactionId;
-      currentSignature = signature;
-      if (!API_URL || !API_URL.trim()) {
-        showFake();
-        return;
-      }
-      show('loading');
-      var url = API_URL.replace(/\/$/, '') + '/receipt/verify';
-      fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transaction_id: transactionId, signature: signature })
-      })
-        .then(function (res) { return res.json().then(function (data) { return { ok: res.ok, data: data }; }); })
-        .then(function (r) {
-          var data = r.data;
-          var reason = data && data.reason ? data.reason : '';
-          if (data && data.valid === true && reason === 'APPROVED') {
-            getReceipt(transactionId, function (receipt) {
-              showValid(receipt || { transaction_id: transactionId });
-            });
-            return;
-          }
-          if (reason === 'QR_EXPIRED') {
-            var expiredAt = data && data.expired_at ? data.expired_at : null;
-            getReceipt(transactionId, function (receipt) {
-              showExpired(expiredAt, receipt);
-            });
-            return;
-          }
-          if (reason === 'ALREADY_USED') {
-            showAlreadyUsed();
-            return;
-          }
-          if (reason === 'FAKE_RECEIPT') {
-            showFake();
-            return;
-          }
-          if (reason === 'NOT_FOUND') {
-            showExpired(null, null);
-            return;
-          }
-          showFake();
-        })
-        .catch(function () {
-          showFake();
-        });
-    }
-
-    function run() {
+    /* ---- Check URL token on page load (QR-opened URL) ---- */
+    function init() {
       var params = new URLSearchParams(window.location.search);
-      var encoded = params.get('data');
-      if (!encoded) return;
-      var payload;
-      try {
-        payload = JSON.parse(decodeURIComponent(encoded));
-      } catch (e) {
-        showFake();
-        return;
+      var token = params.get('token');
+      if (token && token.trim()) {
+        scanCooldown = true;
+        verifyToken(token.trim());
       }
-      var transactionId = payload && payload.transaction_id;
-      var signature = payload && payload.signature;
-      if (!transactionId || !signature) {
-        showFake();
-        return;
-      }
-      verifyReceipt(transactionId, signature);
     }
 
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', run);
+      document.addEventListener('DOMContentLoaded', init);
     } else {
-      run();
+      init();
     }
   })();
   </script>

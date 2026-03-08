@@ -5,6 +5,9 @@ const REGION = process.env.AWS_REGION || "ap-south-1";
 const s3 = new S3Client({ region: REGION });
 const bedrock = new BedrockRuntimeClient({ region: REGION });
 
+// Use APAC inference profile in ap-south-1 so Nova Lite is available (single-region Nova Lite not in ap-south-1)
+const BEDROCK_MODEL_ID = REGION === "ap-south-1" ? "apac.amazon.nova-lite-v1:0" : "amazon.nova-lite-v1:0";
+
 const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
     "Content-Type": "application/json",
@@ -131,10 +134,11 @@ INSTRUCTIONS:
 
     try {
         const command = new InvokeModelCommand({
-            modelId: "amazon.nova-lite-v1:0",
+            modelId: BEDROCK_MODEL_ID,
             contentType: "application/json",
             accept: "application/json",
             body: JSON.stringify({
+                schemaVersion: "messages-v1",
                 system: [{ text: systemPrompt }],
                 messages: [{ role: "user", content: [{ text: message }] }],
                 inferenceConfig: { maxTokens: 300 },
@@ -143,9 +147,12 @@ INSTRUCTIONS:
 
         const response = await bedrock.send(command);
         const responseBody = JSON.parse(new TextDecoder().decode(response.body));
-        const reply =
-            responseBody?.output?.message?.content?.[0]?.text
-                ?? "Sorry, I couldn't generate a response.";
+        const content = responseBody?.output?.message?.content;
+        let reply = "Sorry, I couldn't generate a response.";
+        if (Array.isArray(content) && content.length > 0) {
+            const first = content[0];
+            reply = (first && (first.text ?? first.content)) || reply;
+        }
 
         return {
             statusCode: 200,

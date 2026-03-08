@@ -16,6 +16,7 @@ function buildReceiptForVerify(record) {
         store_id: record.store_id,
         cart_total: record.cart_total,
         items: record.items,
+        timestamp: record.timestamp,
         paid_at: record.paid_at,
         expires_at: record.expires_at,
         status: record.status,
@@ -35,7 +36,27 @@ exports.handler = async (event) => {
         };
     }
 
-    const { transaction_id, signature } = body;
+    const { transaction_id: bodyTxn, signature: bodySig, token: bodyToken } = body;
+
+    let transaction_id = bodyTxn;
+    let signature = bodySig;
+
+    if (bodyToken && typeof bodyToken === "string") {
+        try {
+            const decoded = JSON.parse(Buffer.from(bodyToken, "base64").toString("utf8"));
+            if (decoded && decoded.transaction_id && decoded.signature) {
+                transaction_id = decoded.transaction_id;
+                signature = decoded.signature;
+            }
+        } catch (_) {
+            return {
+                statusCode: 400,
+                headers: corsHeaders,
+                body: JSON.stringify({ valid: false, reason: "INVALID_REQUEST" }),
+            };
+        }
+    }
+
     if (!transaction_id || !signature) {
         return {
             statusCode: 400,
@@ -130,11 +151,26 @@ exports.handler = async (event) => {
             ContentType: "application/json",
         }));
 
-        // Step 6: Return success
+        // Step 6: Return success (include transaction_id so exit gate can show details)
+        const receiptForClient = {
+            transaction_id: record.transaction_id,
+            user_id: record.user_id,
+            store_id: record.store_id,
+            paid_at: record.paid_at,
+            final_total: record.cart_total,
+            items: record.items,
+            store_name: record.store_name,
+        };
         return {
             statusCode: 200,
             headers: corsHeaders,
-            body: JSON.stringify({ valid: true, reason: "APPROVED" }),
+            body: JSON.stringify({
+                valid: true,
+                reason: "APPROVED",
+                status: "VALID",
+                transaction_id: record.transaction_id,
+                receipt: receiptForClient,
+            }),
         };
     } catch (error) {
         console.error("verifyReceipt Error:", error);
