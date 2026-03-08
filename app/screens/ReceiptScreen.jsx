@@ -8,6 +8,7 @@ import {
     ScrollView,
     Platform,
     Share,
+    ActivityIndicator,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -82,16 +83,53 @@ export default function ReceiptScreen() {
 
     const [activeTab, setActiveTab] = useState("exitqr");
     const [receipt, setReceipt] = useState(null);
+    const [receiptLoadError, setReceiptLoadError] = useState(false);
+    const [receiptRetryKey, setReceiptRetryKey] = useState(0);
     const [timeLeftMs, setTimeLeftMs] = useState(null);
     const scaleAnim = useRef(new Animated.Value(0)).current;
     const intervalRef = useRef(null);
 
+    const MAX_RECEIPT_RETRIES = 5;
+    const RETRY_DELAY_MS = 1500;
+
+    const refetchReceipt = () => {
+        setReceiptLoadError(false);
+        setReceipt(null);
+        setReceiptRetryKey((k) => k + 1);
+    };
+
     useEffect(() => {
         if (!transaction_id) return;
-        getReceipt(transaction_id)
-            .then(setReceipt)
-            .catch(() => setReceipt(null));
-    }, [transaction_id]);
+
+        let cancelled = false;
+        setReceiptLoadError(false);
+
+        const tryFetch = (attempt) => {
+            if (cancelled) return;
+            getReceipt(transaction_id)
+                .then((data) => {
+                    if (!cancelled) {
+                        setReceipt(data);
+                        setReceiptLoadError(false);
+                    }
+                })
+                .catch(() => {
+                    if (cancelled) return;
+                    if (attempt >= MAX_RECEIPT_RETRIES) {
+                        setReceipt(null);
+                        setReceiptLoadError(true);
+                    } else {
+                        setTimeout(() => tryFetch(attempt + 1), RETRY_DELAY_MS);
+                    }
+                });
+        };
+
+        tryFetch(1);
+
+        return () => {
+            cancelled = true;
+        };
+    }, [transaction_id, receiptRetryKey]);
 
     useEffect(() => {
         if (!receipt?.expires_at) return;
@@ -278,7 +316,30 @@ export default function ReceiptScreen() {
                         showsVerticalScrollIndicator={false}
                     >
                         {!receipt ? (
-                            <Text style={styles.billLoading}>Loading receipt…</Text>
+                            <View style={styles.billLoadingWrap}>
+                                {receiptLoadError ? (
+                                    <>
+                                        <MaterialIcons name="error-outline" size={48} color={MUTED} />
+                                        <Text style={styles.billLoadErrorTitle}>Could not load receipt</Text>
+                                        <Text style={styles.billLoadErrorSub}>
+                                            Payment may still be confirming. Try again in a moment.
+                                        </Text>
+                                        <TouchableOpacity
+                                            style={styles.billRetryBtn}
+                                            onPress={refetchReceipt}
+                                            activeOpacity={0.8}
+                                        >
+                                            <Text style={styles.billRetryBtnText}>Try again</Text>
+                                        </TouchableOpacity>
+                                    </>
+                                ) : (
+                                    <>
+                                        <ActivityIndicator size="large" color={ACCENT} />
+                                        <Text style={styles.billLoading}>Confirming your payment…</Text>
+                                        <Text style={styles.billLoadingSub}>Receipt will appear in a moment</Text>
+                                    </>
+                                )}
+                            </View>
                         ) : (
                             <View style={styles.billCard}>
                                 <Text style={styles.billStoreName}>
@@ -548,7 +609,30 @@ const styles = StyleSheet.create({
 
     billScroll: { flex: 1 },
     billScrollContent: { padding: 16, paddingBottom: 24 },
-    billLoading: { fontSize: 16, color: MUTED, textAlign: "center", marginTop: 24 },
+    billLoadingWrap: {
+        alignItems: "center",
+        justifyContent: "center",
+        paddingVertical: 48,
+        paddingHorizontal: 24,
+    },
+    billLoading: { fontSize: 16, color: MUTED, textAlign: "center", marginTop: 16 },
+    billLoadingSub: { fontSize: 13, color: MONO, textAlign: "center", marginTop: 8 },
+    billLoadErrorTitle: { fontSize: 17, fontWeight: "600", color: WHITE, textAlign: "center", marginTop: 12 },
+    billLoadErrorSub: {
+        fontSize: 14,
+        color: MUTED,
+        textAlign: "center",
+        marginTop: 8,
+        paddingHorizontal: 24,
+    },
+    billRetryBtn: {
+        marginTop: 24,
+        paddingVertical: 14,
+        paddingHorizontal: 28,
+        backgroundColor: ACCENT,
+        borderRadius: 12,
+    },
+    billRetryBtnText: { fontSize: 16, fontWeight: "600", color: WHITE },
     billCard: {
         backgroundColor: CARD_BG,
         borderRadius: 12,
