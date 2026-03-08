@@ -63,6 +63,10 @@ export default function RecommendationCard({ item, onPress }) {
                 {item.name}
             </Text>
 
+            <Text style={styles.reasonText} numberOfLines={1}>
+                {item.reason || "Recommended for you"}
+            </Text>
+
             <View style={styles.pricingRow}>
                 <View style={styles.pricingLeft}>
                     <View style={styles.priceRow}>
@@ -164,6 +168,12 @@ const styles = StyleSheet.create({
         fontWeight: "600",
         color: TEXT_PRIMARY,
         marginTop: 12,
+    },
+    reasonText: {
+        fontSize: 13,
+        color: "#666666",
+        marginTop: 6,
+        fontStyle: "italic",
     },
     pricingRow: {
         flexDirection: "row",

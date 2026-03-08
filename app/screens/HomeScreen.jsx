@@ -327,24 +327,35 @@ export default function HomeScreen() {
                 )}
             </View>
 
-            {/* 3. SUGGESTED FOR YOU */}
+            {/* 3. RECOMMENDATIONS — separate section */}
             {!showOffersOnly && (
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Suggested For You</Text>
+                    <Text style={styles.sectionTitle}>Recommendations</Text>
+                    <Text style={styles.sectionSubtitle}>Personalized for you</Text>
                     {recsLoading ? (
                         <ActivityIndicator size="small" color={ACCENT} style={styles.loader} />
-                    ) : (
-                        <FlatList
-                            data={recommendations}
-                            horizontal
-                            keyExtractor={(item, i) => item.name + i}
-                            showsHorizontalScrollIndicator={false}
-                            contentContainerStyle={styles.hList}
-                            renderItem={({ item }) => (
-                                <RecommendationCard item={item} onPress={() => {}} />
-                            )}
-                        />
-                    )}
+                    ) : (() => {
+                        const forStore = (recommendations || []).filter(
+                            (r) => !selectedStore || r.store_id === selectedStore
+                        );
+                        return forStore.length === 0 ? (
+                            <Text style={styles.mutedText}>No recommendations yet. Start shopping to see personalized picks.</Text>
+                        ) : (
+                            <FlatList
+                                data={forStore}
+                                horizontal
+                                keyExtractor={(item, i) => (item.product_id || item.name) + String(i)}
+                                showsHorizontalScrollIndicator={false}
+                                contentContainerStyle={styles.hList}
+                                renderItem={({ item }) => (
+                                    <RecommendationCard
+                                        item={item}
+                                        onPress={() => {}}
+                                    />
+                                )}
+                            />
+                        );
+                    })()}
                 </View>
             )}
 
@@ -428,6 +439,11 @@ const styles = StyleSheet.create({
         fontSize: 20,
         fontWeight: "700",
         color: "#222222",
+        marginBottom: 4,
+    },
+    sectionSubtitle: {
+        fontSize: 13,
+        color: MUTED,
         marginBottom: 12,
     },
     greeting: {
