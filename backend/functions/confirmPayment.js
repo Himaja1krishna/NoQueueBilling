@@ -126,13 +126,15 @@ exports.handler = async (event) => {
     }
 
     try {
-        // Step 4: Sign receipt with AWS KMS
+        // Step 4: Sign receipt with AWS KMS (sign SHA-256 digest to stay under 4096-byte KMS limit)
         const messageStr = JSON.stringify(receipt);
-        const messageBytes = new Uint8Array(Buffer.from(messageStr, "utf8"));
+        const digest = crypto.createHash("sha256").update(messageStr, "utf8").digest();
+        const digestBytes = new Uint8Array(digest);
 
         const signResponse = await kmsClient.send(new SignCommand({
             KeyId: keyId,
-            Message: messageBytes,
+            Message: digestBytes,
+            MessageType: "DIGEST",
             SigningAlgorithm: "RSASSA_PKCS1_V1_5_SHA_256",
         }));
 

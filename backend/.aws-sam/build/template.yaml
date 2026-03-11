@@ -27,6 +27,10 @@ Parameters:
     Type: String
     NoEcho: true
     Description: Razorpay webhook secret for payment/confirm
+  ExitGateUrl:
+    Type: String
+    Default: ''
+    Description: (Optional) Base URL of exit-gate page for QR (e.g. https://your-cdn/exit-gate/index.html)
 Globals:
   Function:
     Runtime: nodejs18.x
@@ -216,6 +220,8 @@ Resources:
             Ref: KmsKeyId
           MOCK_DATA_BUCKET:
             Ref: MockDataBucket
+          EXIT_GATE_URL:
+            Ref: ExitGateUrl
       Policies:
       - Version: '2012-10-17'
         Statement:

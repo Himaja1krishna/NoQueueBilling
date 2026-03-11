@@ -126,17 +126,32 @@ exports.handler = async (event) => {
     }
 
     try {
-        // Step 4: Sign receipt with AWS KMS
+        // Step 4: Sign receipt with AWS KMS (sign SHA-256 digest to stay under 4096-byte KMS limit)
         const messageStr = JSON.stringify(receipt);
-        const messageBytes = new Uint8Array(Buffer.from(messageStr, "utf8"));
+        const digest = crypto.createHash("sha256").update(messageStr, "utf8").digest();
+        const digestBytes = new Uint8Array(digest);
 
         const signResponse = await kmsClient.send(new SignCommand({
             KeyId: keyId,
-            Message: messageBytes,
+            Message: digestBytes,
+            MessageType: "DIGEST",
             SigningAlgorithm: "RSASSA_PKCS1_V1_5_SHA_256",
         }));
 
         const signature = Buffer.from(signResponse.Signature).toString("base64");
+
+        // Signed token for QR: base64(JSON.stringify({ transaction_id, signature }))
+        const signedToken = Buffer.from(
+            JSON.stringify({ transaction_id, signature }),
+            "utf8"
+        ).toString("base64");
+
+        // QR URL: guard scans → browser opens → exit gate page loads → auto-verifies.
+        // Set EXIT_GATE_URL (or EXIT_GATE_BASE_URL) to your hosted exit-gate/index.html base URL.
+        const exitGateBase = (process.env.EXIT_GATE_URL || process.env.EXIT_GATE_BASE_URL || "").trim();
+        const qrUrl = exitGateBase
+            ? (exitGateBase.replace(/\?.*$/, "").replace(/\/$/, "") + "?token=" + encodeURIComponent(signedToken))
+            : null;
 
         // Step 5: Save to S3 at orders/{user_id}/{transaction_id}.json
         const s3Key = `orders/${user_id}/${transaction_id}.json`;
@@ -152,7 +167,12 @@ exports.handler = async (event) => {
         return {
             statusCode: 200,
             headers: corsHeaders,
-            body: JSON.stringify({ receipt, signature }),
+            body: JSON.stringify({
+                receipt,
+                signature,
+                signed_token: signedToken,
+                ...(qrUrl && { qr_url: qrUrl }),
+            }),
         };
     } catch (error) {
         console.error("confirmPayment Error:", error);

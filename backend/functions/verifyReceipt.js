@@ -1,3 +1,4 @@
+const crypto = require("crypto");
 const { KMSClient, VerifyCommand } = require("@aws-sdk/client-kms");
 const { S3Client, GetObjectCommand, PutObjectCommand, ListObjectsV2Command } = require("@aws-sdk/client-s3");
 
@@ -122,14 +123,16 @@ exports.handler = async (event) => {
         // Step 3: Rebuild receipt (same fields as confirmPayment, without signature)
         const receipt = buildReceiptForVerify(record);
 
-        // Step 4: Verify KMS signature
+        // Step 4: Verify KMS signature (digest mode — matches how confirmPayment signs)
         const messageStr = JSON.stringify(receipt);
-        const messageBytes = new Uint8Array(Buffer.from(messageStr, "utf8"));
+        const digest = crypto.createHash("sha256").update(messageStr, "utf8").digest();
+        const digestBytes = new Uint8Array(digest);
         const signatureBytes = Buffer.from(signature, "base64");
 
         const verifyResponse = await kmsClient.send(new VerifyCommand({
             KeyId: keyId,
-            Message: messageBytes,
+            Message: digestBytes,
+            MessageType: "DIGEST",
             Signature: signatureBytes,
             SigningAlgorithm: "RSASSA_PKCS1_V1_5_SHA_256",
         }));
